@@ -1,3 +1,4 @@
+import { unsafeHTML } from 'remix/component'
 import type { Handle, RemixNode } from 'remix/component'
 
 import type { PantryRecipe } from '../data/pantry.ts'
@@ -93,34 +94,52 @@ function SearchForm(handle: Handle<{ id: string; placeholder: string; class?: st
   )
 }
 
+/**
+ * Runs before the hero paints: marks it pending so the animated pieces start hidden
+ * (`in-data-[hero-pending]:opacity-0`) instead of flashing before Motion loads.
+ * public/motion.ts clears the flag once the entrance starts; the timeout keeps the hero
+ * from staying hidden if scripts never run, and reduced motion skips it entirely.
+ */
+const HERO_PENDING = unsafeHTML(
+  "(function(h){if(!h||matchMedia('(prefers-reduced-motion: reduce)').matches)return;h.setAttribute('data-hero-pending','');setTimeout(function(){h.removeAttribute('data-hero-pending')},2500)})(document.currentScript&&document.currentScript.parentElement)",
+)
+const pending = 'in-data-[hero-pending]:opacity-0'
+
 function Hero(handle: Handle<{ featured: RecipeSummary | null }>) {
   return () => {
     let featured = handle.props.featured
     return (
       <section
         class="relative overflow-hidden bg-hover lg:min-h-[972px]"
+        data-hero
         style={{
           backgroundImage:
             'linear-gradient(180deg, #3e2f2800 60%, #3e2f2814 100%), radial-gradient(ellipse 40% 45% at 5% 10%, #f2c9a066 0%, #f2c9a000 100%), radial-gradient(ellipse 45% 60% at 78% 55%, #ffffffcc 0%, #ffffff00 100%)',
         }}
       >
+        <script innerHTML={HERO_PENDING} />
         <HeroArtwork />
         <div class={cn(pageX, 'relative z-10 grid gap-8 pt-10 pb-12 lg:block lg:pt-[472px] lg:pb-24')}>
           <div class="flex max-w-[880px] flex-col">
             <h1 class="text-[46px] leading-none tracking-[-1px] lg:text-[112px] lg:tracking-[-1.12px]">
-              Setiap rasa
-              <br />
-              punya cerita.
+              <span class={cn('block', pending)} data-hero-copy>
+                Setiap rasa
+              </span>
+              <span class={cn('block', pending)} data-hero-copy>
+                punya cerita.
+              </span>
             </h1>
-            <p class="mt-[18px] max-w-[620px] text-base leading-[1.55] tracking-[0.01em] text-muted lg:mt-7 lg:text-2xl lg:leading-8">
+            <p class="mt-[18px] max-w-[620px] text-base leading-[1.55] tracking-[0.01em] text-muted lg:mt-7 lg:text-2xl lg:leading-8 in-data-[hero-pending]:opacity-0" data-hero-copy>
               <span class="lg:hidden">
                 Temukan resep dari dapur-dapur Indonesia, cek bahan yang kamu punya, dan telusuri variasi
                 tiap masakan.
               </span>
               <span class="hidden lg:inline">Masakan rumahan seharusnya diwariskan, bukan dilupakan.</span>
             </p>
-            <SearchForm id="home-search-m" placeholder="Cari resep atau bahan…" class="mt-7 lg:hidden" />
-            <div class="order-last mt-3 grid grid-cols-2 gap-2 lg:order-none lg:mt-9 lg:flex lg:gap-3">
+            <div class={cn('mt-7 lg:hidden', pending)} data-hero-copy>
+              <SearchForm id="home-search-m" placeholder="Cari resep atau bahan…" />
+            </div>
+            <div class="order-last mt-3 grid grid-cols-2 gap-2 lg:order-none lg:mt-9 lg:flex lg:gap-3 in-data-[hero-pending]:opacity-0" data-hero-copy>
               <ButtonLink href={routes.recipes.index.href()} variant="default" size="lg">
                 Mulai jelajahi
               </ButtonLink>
@@ -130,7 +149,7 @@ function Hero(handle: Handle<{ featured: RecipeSummary | null }>) {
             </div>
           </div>
           {featured && (
-            <figure class="flex flex-col gap-3 lg:hidden">
+            <figure class="flex flex-col gap-3 lg:hidden in-data-[hero-pending]:opacity-0" data-hero-copy>
               <a
                 href={routes.recipes.show.href({ id: featured.id })}
                 class="block aspect-[350/320] overflow-hidden rounded-md bg-bg"
@@ -151,18 +170,23 @@ function Hero(handle: Handle<{ featured: RecipeSummary | null }>) {
   }
 }
 
+/**
+ * Hero cut-outs. `data-hero-art` names the role used by the hero animation in
+ * public/motion.ts (entrance, idle drift, pointer/scroll parallax); `data-depth`
+ * is how far a piece moves with the parallax (0 = static, 1 = most).
+ */
 function HeroArtwork(_handle: Handle) {
   return () => (
     <div class="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
-      <img src="/images/generated-5.webp" alt="" class="absolute -top-5 -left-52 h-[480px] w-[700px] -rotate-[18deg] object-contain blur-[5px]" />
-      <img src="/images/generated-7.webp" alt="" class="absolute -top-5 left-[37.5%] size-[1240px] object-contain" />
-      <img src="/images/generated-2.webp" alt="" class="absolute top-[237px] left-[55.5%] size-[720px] object-contain" />
-      <img src="/images/generated-6.webp" alt="" class="absolute top-[152px] left-[32.6%] size-[260px] object-contain" />
-      <img src="/images/generated-3.webp" alt="" class="absolute top-[308px] left-[16.4%] size-[190px] object-contain" />
-      <img src="/images/generated-4.webp" alt="" class="absolute top-[72px] right-4 size-[120px] object-contain" />
-      <img src="/images/generated-1.webp" alt="" class="absolute top-[712px] left-[48.6%] size-[210px] object-contain" />
-      <img src="/images/generated.webp" alt="" class="absolute right-[-60px] bottom-12 h-[140px] w-[420px] object-contain" />
-      <p class="absolute top-[200px] left-[69.4%] w-[300px] text-[26px] leading-[31px] tracking-[-0.26px] text-ink">
+      <img src="/images/generated-5.webp" alt="" data-hero-art="leaf" data-depth="0.9" class="in-data-[hero-pending]:opacity-0 absolute -top-5 -left-52 h-[480px] w-[700px] -rotate-[18deg] object-contain blur-[5px]" />
+      <img src="/images/generated-7.webp" alt="" data-hero-art="tray" data-depth="0.15" class="in-data-[hero-pending]:opacity-0 absolute -top-5 left-[37.5%] size-[1240px] object-contain" />
+      <img src="/images/generated-2.webp" alt="" data-hero-art="bowl" data-depth="0.25" class="in-data-[hero-pending]:opacity-0 absolute top-[237px] left-[55.5%] size-[720px] object-contain" />
+      <img src="/images/generated-6.webp" alt="" data-hero-art="item" data-depth="0.7" class="in-data-[hero-pending]:opacity-0 absolute top-[152px] left-[32.6%] size-[260px] object-contain" />
+      <img src="/images/generated-3.webp" alt="" data-hero-art="item" data-depth="0.55" class="in-data-[hero-pending]:opacity-0 absolute top-[308px] left-[16.4%] size-[190px] object-contain" />
+      <img src="/images/generated-4.webp" alt="" data-hero-art="item" data-depth="0.8" class="in-data-[hero-pending]:opacity-0 absolute top-[72px] right-4 size-[120px] object-contain" />
+      <img src="/images/generated-1.webp" alt="" data-hero-art="item" data-depth="0.6" class="in-data-[hero-pending]:opacity-0 absolute top-[712px] left-[48.6%] size-[210px] object-contain" />
+      <img src="/images/generated.webp" alt="" data-hero-art="item" data-depth="0.45" class="in-data-[hero-pending]:opacity-0 absolute right-[-60px] bottom-12 h-[140px] w-[420px] object-contain" />
+      <p data-hero-art="text" class="in-data-[hero-pending]:opacity-0 absolute top-[200px] left-[69.4%] w-[300px] text-[26px] leading-[31px] tracking-[-0.26px] text-ink">
         Resep rumahan Nusantara, dari satu dapur ke dapur lainnya.
       </p>
     </div>

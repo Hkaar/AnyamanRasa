@@ -50,6 +50,11 @@
   --text-3xl--line-height: normal;
   --text-4xl--line-height: normal;
 
+  /* pen.dev strokes are 1px centred on the edge, which reads as a hairline. A solid 1px CSS
+     border looks heavier, so plain `border`/`border-t`/`divide-*` use 0.5px: one device pixel on
+     high-DPI and scaled displays, and still 1px on 1x screens. */
+  --default-border-width: 0.5px;
+
   --radius-*: initial;
   /* pen.dev radius-sm/md/lg = 10/14/20. */
   --radius-xs: 6px;

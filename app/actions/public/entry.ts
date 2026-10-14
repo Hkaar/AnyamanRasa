@@ -6,7 +6,7 @@ import {
 import { run } from 'remix/component'
 
 import { initLoadMore } from './load-more.ts'
-import { startPageMotion } from './motion.ts'
+import { initPageMotion, startPageMotion } from './motion.ts'
 
 const app = run({
   async loadModule(moduleUrl, exportName) {
@@ -82,9 +82,36 @@ document.addEventListener('click', (event) => {
   let button = (event.target as Element | null)?.closest<HTMLElement>('[data-scroll-by]')
   let list = button && document.getElementById(button.getAttribute('aria-controls') ?? '')
   if (!button || !list) return
-  let step = (list.firstElementChild?.getBoundingClientRect().width ?? list.clientWidth) + 20
-  list.scrollBy({ left: Number(button.dataset.scrollBy) * step, behavior: 'smooth' })
+  let direction = Number(button.dataset.scrollBy)
+  let end = list.scrollWidth - list.clientWidth
+  let edge = 4
+  if (direction > 0 && list.scrollLeft >= end - edge) {
+    list.scrollTo({ left: 0, behavior: 'smooth' })
+  } else if (direction < 0 && list.scrollLeft <= edge) {
+    list.scrollTo({ left: end, behavior: 'smooth' })
+  } else {
+    let step = (list.firstElementChild?.getBoundingClientRect().width ?? list.clientWidth) + 20
+    list.scrollBy({ left: direction * step, behavior: 'smooth' })
+  }
 })
 
+// Home header (`data-blend`): blends into the hero only while the page is scrolled to the top.
+// Looked up on every call, because client-side navigation can swap the header.
+function syncBlendingHeader() {
+  document.querySelector('header[data-blend]')?.toggleAttribute('data-at-top', window.scrollY <= 8)
+}
+window.addEventListener('scroll', syncBlendingHeader, { passive: true })
+
+// Per-page setup: on the first load, and after each client-side navigation (Remix swaps the
+// page in place through the Navigation API, so no new document or `load` event happens).
+function initPage() {
+  syncBlendingHeader()
+  initPageMotion()
+  initLoadMore()
+}
+
 startPageMotion()
-initLoadMore()
+initPage()
+if ('navigation' in window) {
+  ;(window.navigation as EventTarget).addEventListener('navigatesuccess', initPage)
+}

@@ -34,14 +34,9 @@ const NAV_LINKS: NavLink[] = [
     icon: 'shopping-basket',
     hint: 'Masak dari isi dapurmu',
   },
-  {
-    key: 'graph',
-    label: 'Jelajahi Graf',
-    href: routes.graph.index.href(),
-    icon: 'waypoints',
-    hint: 'Hubungan antar resep',
-  },
 ]
+// The graph explorer is no longer a top-level nav item in the design; it stays reachable from
+// the home page, recipe and ingredient pages, and the footer.
 
 export interface SiteLayoutProps {
   shell: Shell
@@ -83,10 +78,14 @@ function SiteHeader(handle: Handle<{ shell: Shell; active: NavKey }>) {
       <header
         class={cn(
           'sticky top-0 z-40 border-b border-line bg-bg has-[details[open]_.fixed]:z-[60]',
-          // Home: the bar floats over the hero (as in the design) and stays pinned while scrolling,
-          // tinted like the hero and blurred so content underneath stays legible.
-          active === 'home' && 'lg:fixed lg:inset-x-0 lg:border-line/60 lg:bg-hover/80 lg:backdrop-blur-md',
+          // Home: the bar floats over the hero and stays pinned. While the page is at the top
+          // (`data-at-top`, kept in sync by entry.ts) it blends into the hero; once scrolled it
+          // turns into a tinted, blurred bar so content underneath stays legible.
+          active === 'home' &&
+            'lg:fixed lg:inset-x-0 lg:border-line/60 lg:bg-hover/80 lg:backdrop-blur-md lg:transition-[background-color,border-color,backdrop-filter] lg:duration-300 lg:data-at-top:border-transparent lg:data-at-top:bg-transparent lg:data-at-top:backdrop-blur-none',
         )}
+        data-blend={active === 'home' ? 'true' : undefined}
+        data-at-top={active === 'home' ? 'true' : undefined}
       >
         <div class={cn(pageX, 'flex h-[59px] items-center justify-between lg:h-[71px]')}>
           <div class="flex items-center gap-12">
@@ -99,7 +98,9 @@ function SiteHeader(handle: Handle<{ shell: Shell; active: NavKey }>) {
                       href={link.href}
                       aria-current={active === link.key ? 'page' : undefined}
                       class={cn(
-                        'rounded-full px-3.5 py-2 text-[15px] tracking-[0.02em] transition-colors',
+                        'rounded-full transition-colors',
+                        // Nav/Guest: 15px regular; Nav/User: 14px medium, tighter padding.
+                        viewer ? 'px-3 py-2 text-sm font-medium' : 'px-3.5 py-2 text-[15px] tracking-[0.02em]',
                         active === link.key ? 'bg-hover text-ink' : 'text-muted hover:bg-hover/60 hover:text-ink',
                       )}
                     >
@@ -207,14 +208,14 @@ function MobileMenu(handle: Handle<{ shell: Shell; active: NavKey }>) {
       <div class="flex items-center gap-1 lg:hidden">
         <a
           href={routes.recipes.index.href()}
-          class="flex size-10 items-center justify-center rounded-md text-ink hover:bg-hover"
+          class="flex size-10 items-center justify-center rounded-full text-ink hover:bg-hover"
           aria-label="Cari resep"
         >
           <Icon name="search" size={20} />
         </a>
         <details class="group" data-pop>
           <summary
-            class="flex size-10 cursor-pointer list-none items-center justify-center rounded-md text-ink group-open:bg-hover [&::-webkit-details-marker]:hidden"
+            class="flex size-10 cursor-pointer list-none items-center justify-center rounded-full text-ink group-open:bg-hover [&::-webkit-details-marker]:hidden"
             aria-label="Menu"
           >
             <Icon name="menu" size={20} class="group-open:hidden" />
