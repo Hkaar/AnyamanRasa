@@ -6,7 +6,8 @@ import { DIFFICULTIES, type RecipeSummary } from '../../domain/types.ts'
 import { routes } from '../../routes.ts'
 import { Icon } from '../../ui/icon.tsx'
 import { SiteLayout } from '../../ui/layout.tsx'
-import { InlineSelect } from '../../ui/inline-select.tsx'
+import { LoadMore, LoadMoreChunk } from '../../ui/load-more.tsx'
+import { Select } from '../../ui/select.tsx'
 import { RecipeCard } from '../../ui/recipe-card.tsx'
 import type { Shell } from '../../ui/shell.ts'
 import { DURATION_OPTIONS, filtersToParams, hasActiveFilters } from './filters.ts'
@@ -121,23 +122,25 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
                   </fieldset>
                 </details>
 
-                <InlineSelect label="Durasi" name="durasi" class="border-outline pl-4" value={filters.maxMinutes === null ? '' : String(filters.maxMinutes)}>
-                  <option value="" selected={!(filters.maxMinutes === null ? '' : String(filters.maxMinutes))}>Semua</option>
-                  {DURATION_OPTIONS.map((minutes) => (
-                    <option key={minutes} value={String(minutes)} selected={String(minutes) === (filters.maxMinutes === null ? '' : String(filters.maxMinutes))}>
-                      {`≤\u00a0${minutes}\u00a0menit`}
-                    </option>
-                  ))}
-                </InlineSelect>
+                <Select
+                  label="Durasi"
+                  name="durasi"
+                  value={filters.maxMinutes === null ? '' : String(filters.maxMinutes)}
+                  options={[
+                    { value: '', label: 'Semua' },
+                    ...DURATION_OPTIONS.map((minutes) => ({ value: String(minutes), label: `≤\u00a0${minutes}\u00a0menit` })),
+                  ]}
+                />
 
-                <InlineSelect label="Kesulitan" name="kesulitan" class="border-outline pl-4" value={filters.difficulties[0] ?? ''}>
-                  <option value="" selected={!(filters.difficulties[0] ?? '')}>Semua</option>
-                  {DIFFICULTIES.map((difficulty) => (
-                    <option key={difficulty} value={difficulty} selected={difficulty === (filters.difficulties[0] ?? '')}>
-                      {difficultyLabel(difficulty)}
-                    </option>
-                  ))}
-                </InlineSelect>
+                <Select
+                  label="Kesulitan"
+                  name="kesulitan"
+                  value={filters.difficulties[0] ?? ''}
+                  options={[
+                    { value: '', label: 'Semua' },
+                    ...DIFFICULTIES.map((difficulty) => ({ value: difficulty, label: difficultyLabel(difficulty) })),
+                  ]}
+                />
 
                 <noscript>
 
@@ -159,15 +162,15 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
                 <p class="text-[13px] text-muted" aria-live="polite">
                   {formatCount(total)} resep ditemukan
                 </p>
-                <InlineSelect label="Urutkan" name="urut" class="border-outline pl-4" value={filters.sort}>
-                  {(Object.keys(SORT_LABELS) as RecipeSort[])
+                <Select
+                  label="Urutkan"
+                  name="urut"
+                  align="end"
+                  value={filters.sort}
+                  options={(Object.keys(SORT_LABELS) as RecipeSort[])
                     .filter((sort) => sort !== 'relevan' || filters.query)
-                    .map((sort) => (
-                      <option key={sort} value={sort} selected={sort === (filters.sort)}>
-                        {SORT_LABELS[sort]}
-                      </option>
-                    ))}
-                </InlineSelect>
+                    .map((sort) => ({ value: sort, label: SORT_LABELS[sort] }))}
+                />
               </div>
             </div>
 

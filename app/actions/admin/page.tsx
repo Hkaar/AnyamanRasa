@@ -7,7 +7,7 @@ import type { RecipeStatus } from '../../domain/types.ts'
 import { routes } from '../../routes.ts'
 import { Document } from '../../ui/document.tsx'
 import { Icon, type IconName } from '../../ui/icon.tsx'
-import { InlineSelect } from '../../ui/inline-select.tsx'
+import { Select } from '../../ui/select.tsx'
 import { CsrfField, Logo } from '../../ui/primitives.tsx'
 import type { Shell } from '../../ui/shell.ts'
 import { BulkActions } from './public/bulk-actions.tsx'
@@ -123,22 +123,24 @@ export function AdminRecipesPage(handle: Handle<AdminRecipesPageProps>) {
                   <span class="sr-only">Cari judul atau penulis</span>
                   <input type="search" name="q" value={filters.query} placeholder="Cari judul atau penulis…" class="h-full min-w-0 flex-1 bg-transparent text-[13px] tracking-[0.26px] placeholder:text-faint focus:outline-none" />
                 </label>
-                <InlineSelect label="Status" name="status" value={filters.status ?? ''}>
-                  <option value="" selected={!(filters.status ?? '')}>Semua</option>
-                  {(Object.keys(STATUS) as RecipeStatus[]).map((status) => (
-                    <option key={status} value={status} selected={status === (filters.status ?? '')}>
-                      {STATUS[status].label}
-                    </option>
-                  ))}
-                </InlineSelect>
-                <InlineSelect label="Kategori" name="kategori" value={filters.categoryId ? String(filters.categoryId) : ''}>
-                  <option value="" selected={!(filters.categoryId ? String(filters.categoryId) : '')}>Semua</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={String(category.id)} selected={String(category.id) === (filters.categoryId ? String(filters.categoryId) : '')}>
-                      {category.name}
-                    </option>
-                  ))}
-                </InlineSelect>
+                <Select
+                  label="Status"
+                  name="status"
+                  value={filters.status ?? ''}
+                  options={[
+                    { value: '', label: 'Semua' },
+                    ...(Object.keys(STATUS) as RecipeStatus[]).map((status) => ({ value: status, label: STATUS[status].label })),
+                  ]}
+                />
+                <Select
+                  label="Kategori"
+                  name="kategori"
+                  value={filters.categoryId ? String(filters.categoryId) : ''}
+                  options={[
+                    { value: '', label: 'Semua' },
+                    ...categories.map((category) => ({ value: String(category.id), label: category.name })),
+                  ]}
+                />
                 <noscript>
                   <Button type="submit" variant="outline">Terapkan</Button>
                 </noscript>

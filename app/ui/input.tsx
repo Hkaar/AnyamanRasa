@@ -1,7 +1,6 @@
-// shadcn/ui Input, Textarea and NativeSelect, themed with pen.dev's Form Field.
+// shadcn/ui Input and Textarea, themed with pen.dev's Form Field. Selects live in select.tsx.
 import type { Handle, Props } from 'remix/component'
 
-import { Icon } from './icon.tsx'
 import { cn } from './utils.ts'
 
 export const inputClass =
@@ -20,21 +19,6 @@ export function Textarea(handle: Handle<Props<'textarea'>>) {
   return () => {
     let { class: className, ...props } = handle.props
     return <textarea data-slot="textarea" class={cn(textareaClass, className as string)} {...props} />
-  }
-}
-
-export const nativeSelectClass = cn(inputClass, 'cursor-pointer appearance-none pr-9')
-
-/** shadcn/ui NativeSelect: a styled <select> with a chevron. */
-export function NativeSelect(handle: Handle<Props<'select'> & { wrapperClass?: string }>) {
-  return () => {
-    let { class: className, wrapperClass, ...props } = handle.props
-    return (
-      <div data-slot="native-select-wrapper" class={cn('relative', wrapperClass)}>
-        <select data-slot="native-select" class={cn(nativeSelectClass, className as string)} {...props} />
-        <Icon name="chevron-down" class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted" />
-      </div>
-    )
   }
 }
 

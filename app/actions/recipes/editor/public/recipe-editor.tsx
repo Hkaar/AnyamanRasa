@@ -19,7 +19,8 @@ import { Icon } from '../../../../ui/icon.tsx'
 import { enter } from '../../../public/motion.ts'
 import { Button, ButtonLink } from '../../../../ui/button.tsx'
 import { badgeVariants } from '../../../../ui/badge.tsx'
-import { inputClass, NativeSelect, textareaClass } from '../../../../ui/input.tsx'
+import { inputClass, textareaClass } from '../../../../ui/input.tsx'
+import { Select } from '../../../../ui/select.tsx'
 import { labelClass } from '../../../../ui/label.tsx'
 import { cn, eyebrow } from '../../../../ui/utils.ts'
 
@@ -627,39 +628,41 @@ export const RecipeEditor = clientEntry(
                               handle.update()
                             })}
                           />
-                          <NativeSelect
-                            class="border-line"
-                            name="bahan_satuan"
-                            aria-label={`Satuan ${row.name || `bahan ${index + 1}`}`}
-                            value={row.unit}
-                            mix={on('change', (event) => {
-                              row.unit = event.currentTarget.value
-                              handle.update()
-                            })}
-                          >
-                            <option value="" selected={!row.unit}>pilih satuan</option>
-                            {UNITS.map((unit) => (
-                              <option key={unit} value={unit} selected={unit === row.unit}>
-                                {unit}
-                              </option>
-                            ))}
-                          </NativeSelect>
-                          <NativeSelect
-                            class="border-line"
-                            name="bahan_kelompok"
-                            aria-label={`Kelompok ${row.name || `bahan ${index + 1}`}`}
-                            value={row.section}
-                            mix={on('change', (event) => {
-                              row.section = event.currentTarget.value
-                            })}
-                          >
-                            <option value="" selected={!row.section}>Tanpa kelompok</option>
-                            {INGREDIENT_SECTIONS.map((section) => (
-                              <option key={section} value={section} selected={section === row.section}>
-                                {section}
-                              </option>
-                            ))}
-                          </NativeSelect>
+                          {/* Radios are named per row so each row is its own group; the hidden
+                              inputs submit the values under the shared field names. */}
+                          <div>
+                            <input type="hidden" name="bahan_satuan" value={row.unit} />
+                            <Select
+                              variant="field"
+                              class="[&>summary]:border-line"
+                              name={`bahan_satuan_${row.key}`}
+                              ariaLabel={`Satuan ${row.name || `bahan ${index + 1}`}`}
+                              value={row.unit}
+                              options={[{ value: '', label: 'pilih satuan' }, ...UNITS.map((unit) => ({ value: unit, label: unit }))]}
+                              onChange={(unit) => {
+                                row.unit = unit
+                                handle.update()
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <input type="hidden" name="bahan_kelompok" value={row.section} />
+                            <Select
+                              variant="field"
+                              class="[&>summary]:border-line"
+                              name={`bahan_kelompok_${row.key}`}
+                              ariaLabel={`Kelompok ${row.name || `bahan ${index + 1}`}`}
+                              value={row.section}
+                              options={[
+                                { value: '', label: 'Tanpa kelompok' },
+                                ...INGREDIENT_SECTIONS.map((section) => ({ value: section, label: section })),
+                              ]}
+                              onChange={(section) => {
+                                row.section = section
+                                handle.update()
+                              }}
+                            />
+                          </div>
                           <div class="flex justify-end gap-0.5 sm:col-span-2 xl:col-span-1">
                             <input type="hidden" name="bahan_catatan" value={row.note} />
                             <RowButton label="Naikkan" icon="arrow-up" disabled={index === 0} onPress={() => { ingredients = move(ingredients, index, -1); handle.update() }} />

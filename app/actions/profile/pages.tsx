@@ -12,7 +12,8 @@ import { CsrfField } from '../../ui/primitives.tsx'
 import { RecipeCard } from '../../ui/recipe-card.tsx'
 import type { Shell } from '../../ui/shell.ts'
 import { Button, ButtonLink } from '../../ui/button.tsx'
-import { InlineSelect } from '../../ui/inline-select.tsx'
+import { LoadMore, LoadMoreChunk } from '../../ui/load-more.tsx'
+import { Select } from '../../ui/select.tsx'
 import { checkboxClass, inputClass, textareaClass } from '../../ui/input.tsx'
 import { Field, fieldAttrs } from '../../ui/label.tsx'
 import { tabsListClass, tabsTriggerClass } from '../../ui/tabs.tsx'
@@ -142,13 +143,13 @@ export function ProfilePage(handle: Handle<ProfilePageProps>) {
             {sortable && (
               <form method="get" action={base} data-autosubmit class="hidden items-center gap-2 lg:flex">
                 {tab !== 'resep' && <input type="hidden" name="tab" value={tab} />}
-                <InlineSelect label="Urutkan" name="urut" value={sort}>
-                  {AUTHOR_SORTS.map((value) => (
-                    <option key={value} value={value} selected={value === sort}>
-                      {SORT_LABELS[value]}
-                    </option>
-                  ))}
-                </InlineSelect>
+                <Select
+                  label="Urutkan"
+                  name="urut"
+                  align="end"
+                  value={sort}
+                  options={AUTHOR_SORTS.map((value) => ({ value, label: SORT_LABELS[value] }))}
+                />
                 <noscript>
                   <Button type="submit" variant="outline">
                     Terapkan

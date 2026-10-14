@@ -6,14 +6,13 @@ import { type PantryIngredient, type PantryMatch, STAPLE_INGREDIENT_NAMES } from
 import { DIFFICULTIES, type IngredientSummary } from '../../domain/types.ts'
 import { routes } from '../../routes.ts'
 import { Icon } from '../../ui/icon.tsx'
-import { InlineSelect } from '../../ui/inline-select.tsx'
+import { Select, type SelectOption } from '../../ui/select.tsx'
 import { SiteLayout } from '../../ui/layout.tsx'
 import { CsrfField, MetaItem } from '../../ui/primitives.tsx'
 import type { Shell } from '../../ui/shell.ts'
 import { INITIAL_RESULTS, PANTRY_DURATIONS, type PantryParams, pantryHref } from './params.ts'
 import { CHOSEN_ID, IngredientCombobox } from './public/ingredient-combobox.tsx'
 import { Button, ButtonLink, buttonVariants } from '../../ui/button.tsx'
-import { NativeSelect } from '../../ui/input.tsx'
 import { labelClass } from '../../ui/label.tsx'
 import { badgeVariants } from '../../ui/badge.tsx'
 import { cn, pageX } from '../../ui/utils.ts'
@@ -59,26 +58,14 @@ export function PantryPage(handle: Handle<PantryPageProps>) {
       </>
     )
     let minutesValue = state.maxMinutes === null ? '' : String(state.maxMinutes)
-    let minutesOptions = () => (
-      <>
-        <option value="" selected={!minutesValue}>Semua</option>
-        {PANTRY_DURATIONS.map((minutes) => (
-          <option key={minutes} value={String(minutes)} selected={String(minutes) === minutesValue}>
-            ≤ {minutes} menit
-          </option>
-        ))}
-      </>
-    )
-    let difficultyOptions = () => (
-      <>
-        <option value="" selected={!state.difficulty}>Semua</option>
-        {DIFFICULTIES.map((difficulty) => (
-          <option key={difficulty} value={difficulty} selected={difficulty === state.difficulty}>
-            {difficultyLabel(difficulty)}
-          </option>
-        ))}
-      </>
-    )
+    let minutesOptions: SelectOption[] = [
+      { value: '', label: 'Semua' },
+      ...PANTRY_DURATIONS.map((minutes) => ({ value: String(minutes), label: `≤ ${minutes} menit` })),
+    ]
+    let difficultyOptions: SelectOption[] = [
+      { value: '', label: 'Semua' },
+      ...DIFFICULTIES.map((difficulty) => ({ value: difficulty, label: difficultyLabel(difficulty) })),
+    ]
     let activeFilters = (state.maxMinutes !== null ? 1 : 0) + (state.difficulty ? 1 : 0)
 
     return (
@@ -243,32 +230,22 @@ export function PantryPage(handle: Handle<PantryPageProps>) {
                   </summary>
                   <div class="absolute top-[calc(100%+6px)] left-0 z-30 flex w-[calc(100vw-40px)] max-w-[350px] flex-col gap-3 rounded-md border border-line-strong bg-bg p-3 shadow-modal">
                     <div class="flex flex-col gap-1.5">
-                      <label for="filter-waktu" class={labelClass}>Waktu</label>
-                      <NativeSelect id="filter-waktu" name="waktu" form="filter-seluler">
-                        {minutesOptions()}
-                      </NativeSelect>
+                      <span class={labelClass}>Waktu</span>
+                      <Select variant="field" ariaLabel="Waktu" name="waktu" form="filter-seluler" value={minutesValue} options={minutesOptions} />
                     </div>
                     <div class="flex flex-col gap-1.5">
-                      <label for="filter-kesulitan" class={labelClass}>Kesulitan</label>
-                      <NativeSelect id="filter-kesulitan" name="kesulitan" form="filter-seluler">
-                        {difficultyOptions()}
-                      </NativeSelect>
+                      <span class={labelClass}>Kesulitan</span>
+                      <Select variant="field" ariaLabel="Kesulitan" name="kesulitan" form="filter-seluler" value={state.difficulty ?? ''} options={difficultyOptions} />
                     </div>
                     <noscript>
                       <Button type="submit" form="filter-seluler" variant="outline" class="w-full">Terapkan</Button>
                     </noscript>
                   </div>
                 </details>
-                <InlineSelect label="Waktu" name="waktu" value={minutesValue} class="hidden lg:flex lg:border-outline">
-                  {minutesOptions()}
-                </InlineSelect>
-                <InlineSelect label="Kesulitan" name="kesulitan" value={state.difficulty ?? ''} class="hidden lg:flex lg:border-outline">
-                  {difficultyOptions()}
-                </InlineSelect>
+                <Select label="Waktu" name="waktu" value={minutesValue} options={minutesOptions} class="hidden lg:block" />
+                <Select label="Kesulitan" name="kesulitan" value={state.difficulty ?? ''} options={difficultyOptions} class="hidden lg:block" />
                 {/* Only one ordering exists (best match first); a real select keeps it honest. */}
-                <InlineSelect label="Urutkan" name="urut" value="cocok" class="flex-1 lg:flex-none lg:border-outline">
-                  <option value="cocok" selected>Paling cocok</option>
-                </InlineSelect>
+                <Select label="Urutkan" name="urut" value="cocok" align="end" options={[{ value: 'cocok', label: 'Paling cocok' }]} class="flex-1 lg:flex-none" />
                 <noscript>
                   <Button type="submit" variant="outline" class="hidden lg:inline-flex">Terapkan</Button>
                 </noscript>

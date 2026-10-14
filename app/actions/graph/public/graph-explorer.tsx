@@ -18,6 +18,7 @@ import { routes } from '../../../routes.ts'
 import { Icon } from '../../../ui/icon.tsx'
 import { iconData } from '../../../ui/icon-data.ts'
 import { MetaItem } from '../../../ui/primitives.tsx'
+import { Select } from '../../../ui/select.tsx'
 import { Tooltip } from '../../../ui/tooltip.tsx'
 import { enter, prefersReducedMotion } from '../../public/motion.ts'
 import { type GraphParams, type GraphView, graphQuery } from './params.ts'
@@ -405,12 +406,10 @@ export const GraphExplorer = clientEntry(
       }
     }
 
-    let depthOptions = () =>
-      Array.from({ length: MAX_GRAPH_DEPTH }, (_, i) => i + 1).map((depth) => (
-        <option key={depth} value={String(depth)} selected={depth === state.depth}>
-          {depth} tingkat
-        </option>
-      ))
+    let depthOptions = Array.from({ length: MAX_GRAPH_DEPTH }, (_, i) => i + 1).map((depth) => ({
+      value: String(depth),
+      label: `${depth} tingkat`,
+    }))
 
     return () => {
       let center = nodeByKey(graph.center)
@@ -527,9 +526,15 @@ export const GraphExplorer = clientEntry(
               )
             })}
             {view === 'daftar' && (
-              <DepthSelect id="graph-depth-list" class="ml-auto shrink-0" value={state.depth} onChange={(depth) => load({ depth }, false)}>
-                {depthOptions()}
-              </DepthSelect>
+              <Select
+                label="Kedalaman"
+                name="kedalaman-daftar"
+                align="end"
+                class="ml-auto shrink-0"
+                value={String(state.depth)}
+                options={depthOptions}
+                onChange={(depth) => load({ depth: Number(depth) }, false)}
+              />
             )}
           </div>
 
@@ -594,9 +599,15 @@ export const GraphExplorer = clientEntry(
                 )}
               </fieldset>
 
-              <DepthSelect id="graph-depth" class="absolute top-3 right-3 lg:top-6 lg:right-6" value={state.depth} onChange={(depth) => load({ depth }, false)}>
-                {depthOptions()}
-              </DepthSelect>
+              <Select
+                label="Kedalaman"
+                name="kedalaman-graf"
+                align="end"
+                class="absolute top-3 right-3 z-10 lg:top-6 lg:right-6"
+                value={String(state.depth)}
+                options={depthOptions}
+                onChange={(depth) => load({ depth: Number(depth) }, false)}
+              />
 
               {/* Zoom: vertical stack top-left on mobile, horizontal bar bottom-left on desktop */}
               <div class="absolute top-[160px] right-3 flex w-11 flex-col items-center rounded-md border border-line bg-bg p-0.5 lg:top-auto lg:right-auto lg:bottom-6 lg:left-6 lg:h-10 lg:w-auto lg:flex-row lg:gap-0.5 lg:rounded-full lg:border-0 lg:px-2 lg:py-0">
@@ -656,32 +667,6 @@ export const GraphExplorer = clientEntry(
     }
   },
 )
-
-/** pen.dev Select ("Kedalaman 1 tingkat") backed by a native <select>. */
-function DepthSelect(
-  handle: Handle<{ id: string; value: number; class?: string; onChange: (depth: number) => void; children?: RemixNode }>,
-) {
-  return () => {
-    let { id, class: className, onChange, children } = handle.props
-    return (
-      <div class={cn('flex h-10 items-center rounded-md border border-outline bg-bg pl-4 text-[13px] focus-within:border-ink', className)}>
-        <label for={id} class="whitespace-nowrap text-muted">
-          Kedalaman
-        </label>
-        <span class="relative flex h-full items-center">
-          <select
-            id={id}
-            class="h-full cursor-pointer appearance-none bg-transparent pr-8 pl-2 font-medium focus:outline-none"
-            mix={on('change', (event) => onChange(Number(event.currentTarget.value)))}
-          >
-            {children}
-          </select>
-          <Icon name="chevron-down" class="pointer-events-none absolute right-3 text-muted" />
-        </span>
-      </div>
-    )
-  }
-}
 
 function ZoomButton(
   handle: Handle<{ label: string; icon: 'plus' | 'minus'; class?: string; onPress: () => void }>,
