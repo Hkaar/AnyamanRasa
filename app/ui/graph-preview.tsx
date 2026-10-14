@@ -77,7 +77,7 @@ export function GraphPreview(handle: Handle<{ graph: GraphNeighborhood; tone?: T
             'absolute top-4 right-4 hidden items-center gap-0.5 rounded-full p-1 focus-visible:outline-2 md:flex',
             dark
               ? 'bg-white/10 text-white/70 hover:text-white focus-visible:outline-white'
-              : 'border border-line bg-bg text-muted hover:text-ink focus-visible:outline-ink',
+              : 'bg-hover text-muted hover:bg-hover-strong hover:text-ink focus-visible:outline-ink',
           )}
         >
           {(['minus', 'plus', 'maximize-2'] as const).map((icon) => (
@@ -182,9 +182,9 @@ function PreviewNode(handle: Handle<{ node: GraphNode; x: number; y: number; cen
       return (
         <span
           style={style}
-          class="absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-md border border-line-strong bg-subtle py-1.5 pr-3 pl-2 text-xs font-medium whitespace-nowrap"
+          class="absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-md bg-lilac py-1.5 pr-3 pl-2 text-xs font-medium whitespace-nowrap"
         >
-          <span class="flex size-[18px] items-center justify-center rounded-xs bg-accent-subtle text-accent">
+          <span class="flex size-[18px] items-center justify-center rounded-xs bg-bg text-accent">
             <Icon name="leaf" size={12} />
           </span>
           {node.name}
@@ -197,19 +197,16 @@ function PreviewNode(handle: Handle<{ node: GraphNode; x: number; y: number; cen
         <span
           class={cn(
             'block overflow-hidden rounded-full bg-hover',
-            center ? 'size-[72px] border-2 border-accent md:size-[88px]' : 'size-12 border-2 border-line-strong md:size-14',
+            // Graph Node/Recipe/Selected: an accent ring made of padding, not a stroke.
+            center ? 'size-[72px] bg-accent p-[3px] md:size-[88px]' : 'size-12 md:size-14',
           )}
         >
-          {node.imageUrl && <img src={node.imageUrl} alt="" class="size-full object-cover" loading="lazy" />}
+          {node.imageUrl && <img src={node.imageUrl} alt="" class="size-full rounded-full object-cover" loading="lazy" />}
         </span>
         <span
           class={cn(
-            'absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded-full border px-2.5 py-1 text-[11px] font-medium whitespace-nowrap md:text-xs',
-            center
-              ? dark
-                ? 'border-accent bg-accent text-white'
-                : 'border-ink bg-ink text-white'
-              : 'border-line bg-bg text-ink',
+            'absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded-full px-2.5 py-1 text-[11px] font-medium whitespace-nowrap md:text-xs',
+            center ? (dark ? 'bg-accent text-white' : 'bg-ink text-white') : 'bg-hover text-ink',
           )}
         >
           {node.name}

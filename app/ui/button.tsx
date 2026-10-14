@@ -1,23 +1,27 @@
 // shadcn/ui Button, ported to Remix components and themed with the pen.dev tokens
-// (Button/Primary → default (terracotta), Button/Secondary → outline, Button/Ghost,
-// Button/Accent → dark (brown); `accent` is the soft terracotta tint).
+// (Button/Primary → default (terracotta), Button/Secondary → outline (cream fill, no border),
+// Button/Ghost, Button/Accent → dark (brown); `accent` is the soft terracotta tint).
+// Hover/pressed/focus/disabled follow the design's Button/*/{Hover,Pressed,Focus,Disabled}.
 import type { Handle, Props } from 'remix/component'
 import { type VariantProps, cva } from 'class-variance-authority'
 
 import { cn } from './utils.ts'
 
 export const buttonVariants = cva(
-  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-sm text-sm tracking-[0.02em] whitespace-nowrap outline-none transition-[color,background-color,border-color,box-shadow,opacity] focus-visible:ring-[3px] focus-visible:ring-accent/30 disabled:pointer-events-none disabled:opacity-40 aria-disabled:pointer-events-none aria-disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-sm text-sm tracking-[0.02em] whitespace-nowrap outline-none transition-[color,background-color,box-shadow,opacity] focus-visible:ring-[3px] focus-visible:ring-focus-ring disabled:pointer-events-none aria-disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: 'bg-accent text-white hover:bg-accent-strong',
-        outline: 'border border-outline bg-bg text-ink hover:bg-hover',
-        dark: 'bg-surface-dark text-white hover:bg-ink',
-        ghost: 'text-ink hover:bg-hover',
-        accent: 'bg-accent-subtle text-accent-strong hover:bg-accent/15',
-        destructive: 'bg-error text-white hover:bg-error/90 focus-visible:ring-error/25',
-        link: 'text-ink underline-offset-4 hover:underline',
+        default:
+          'bg-accent text-white hover:bg-accent-strong active:bg-accent-pressed disabled:bg-hover disabled:text-faint aria-disabled:bg-hover aria-disabled:text-faint',
+        outline:
+          'bg-hover text-ink hover:bg-hover-strong active:bg-pressed disabled:bg-subtle disabled:text-faint aria-disabled:bg-subtle aria-disabled:text-faint',
+        dark: 'bg-surface-dark text-white hover:bg-ink active:bg-night disabled:bg-hover disabled:text-faint aria-disabled:bg-hover aria-disabled:text-faint',
+        ghost: 'text-ink hover:bg-hover active:bg-hover-strong disabled:text-faint aria-disabled:text-faint',
+        accent: 'bg-accent-subtle text-accent-strong hover:bg-accent/15 disabled:opacity-40 aria-disabled:opacity-40',
+        destructive:
+          'bg-error text-white hover:bg-error/90 focus-visible:ring-error/25 disabled:opacity-40 aria-disabled:opacity-40',
+        link: 'text-ink underline-offset-4 hover:underline disabled:opacity-40 aria-disabled:opacity-40',
       },
       size: {
         default: 'h-10 px-4',

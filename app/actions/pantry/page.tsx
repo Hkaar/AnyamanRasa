@@ -177,7 +177,7 @@ export function PantryPage(handle: Handle<PantryPageProps>) {
                         href={href({ ingredientIds: [...state.ingredientIds, ingredient.id] })}
                         class={cn(
                           badgeVariants({ variant: 'chip-muted' }),
-                          'h-[38px] pr-3 pl-3.5 text-sm bg-bg hover:bg-hover hover:text-ink lg:h-[34px] lg:border-outline lg:bg-transparent lg:pl-4',
+                          'h-[38px] pr-3 pl-3.5 text-sm hover:bg-hover hover:text-ink lg:h-[34px] lg:bg-hover lg:text-ink lg:hover:bg-hover-strong lg:pl-4',
                         )}
                       >
                         {ingredient.name}

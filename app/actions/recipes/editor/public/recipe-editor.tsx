@@ -72,9 +72,11 @@ const QUICK_CHANGES = ['Ganti bahan utama', 'Tambah bahan', 'Kurangi gula', 'Leb
 const ingredientGrid =
   'grid grid-cols-[minmax(0,1fr)_88px] gap-2 sm:grid-cols-[minmax(0,1fr)_96px_120px] sm:gap-3 xl:grid-cols-[minmax(0,1fr)_120px_140px_156px_100px]'
 
-/** pen.dev form fields use the soft $border outline (the shared input uses $border-strong). */
-const fieldClass = cn(inputClass, 'border-line')
-const areaClass = cn(textareaClass, 'border-line')
+/** Form Field and Textarea instances use the shared filled input. */
+const fieldClass = inputClass
+const areaClass = textareaClass
+/** Ingredient amounts and step rows keep the design's white field with a $border outline. */
+const outlinedFieldClass = cn(inputClass, 'border border-line bg-bg hover:bg-bg focus-visible:border-ink focus-visible:bg-bg')
 
 /**
  * The recipe editor: section rail, form body and publish bar. Every field is a
@@ -520,7 +522,7 @@ export const RecipeEditor = clientEntry(
                         checked={values.categoryIds.includes(category.id)}
                         class="peer sr-only"
                       />
-                      <span class={cn(badgeVariants({ variant: 'chip' }), 'pr-4 hover:bg-hover peer-checked:border-ink peer-checked:bg-ink peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink')}>
+                      <span class={cn(badgeVariants({ variant: 'chip' }), 'pr-4 peer-checked:bg-ink peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink')}>
                         {category.name}
                       </span>
                     </label>
@@ -622,7 +624,7 @@ export const RecipeEditor = clientEntry(
                             value={row.quantity}
                             placeholder="Jumlah"
                             aria-label={`Jumlah ${row.name || `bahan ${index + 1}`}`}
-                            class={cn(fieldClass, diff?.kind === 'changed' && 'border-accent bg-accent-subtle')}
+                            class={cn(outlinedFieldClass, diff?.kind === 'changed' && 'border-accent bg-accent-subtle')}
                             mix={on('input', (event) => {
                               row.quantity = event.currentTarget.value
                               handle.update()
@@ -711,7 +713,7 @@ export const RecipeEditor = clientEntry(
                   let rowError = errors.stepRows[index]
                   let filled = row.text.trim().length > 0
                   let changed = stepChanged(row)
-                  let stepInput = cn(fieldClass, changed && 'border-accent bg-accent-subtle')
+                  let stepInput = cn(outlinedFieldClass, changed && 'border-accent bg-accent-subtle')
                   return (
                     <li key={row.key} class="grid grid-cols-[32px_minmax(0,1fr)] gap-x-3 gap-y-2 sm:grid-cols-[32px_minmax(0,1fr)_100px] sm:gap-x-4">
                       <span

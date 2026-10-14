@@ -12,7 +12,7 @@ export function Logo(handle: Handle<{ href?: string; class?: string; inverted?: 
       class={cn('inline-flex shrink-0 items-center gap-2 rounded-md', handle.props.class)}
       aria-label="AnyamanRasa, ke beranda"
     >
-      <img src="/logo.png" alt="" width={34} height={28} class="h-7 w-[34px] object-contain" />
+      <img src={handle.props.inverted ? '/logo-light.png' : '/logo.png'} alt="" width={34} height={28} class="h-7 w-[34px] object-contain" />
       <span class={cn('text-[17px] font-medium tracking-[-0.4px]', handle.props.inverted ? 'text-white' : 'text-ink')}>
         AnyamanRasa
       </span>

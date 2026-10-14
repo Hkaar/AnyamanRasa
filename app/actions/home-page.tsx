@@ -72,7 +72,7 @@ function SearchForm(handle: Handle<{ id: string; placeholder: string; class?: st
       action={routes.recipes.index.href()}
       role="search"
       class={cn(
-        'flex h-[52px] items-center gap-2.5 rounded-md border border-outline bg-bg pr-2 pl-4 focus-within:border-accent lg:h-14',
+        'flex h-[52px] items-center gap-2.5 rounded-md bg-hover pr-2 pl-4 transition-colors hover:bg-lilac focus-within:bg-pink lg:h-14',
         handle.props.class,
       )}
     >
@@ -374,7 +374,7 @@ function Inspiration(handle: Handle<{ tab: HomeTab; recipes: RecipeSummary[] }>)
     let { tab, recipes } = handle.props
     let [first, ...rest] = recipes
     return (
-      <section aria-labelledby="inspirasi" class="scroll-mt-[60px] bg-hover lg:scroll-mt-[72px]">
+      <section aria-labelledby="inspirasi" class="scroll-mt-[60px] bg-hover [--card-hover:var(--color-bg)] lg:scroll-mt-[72px]">
         <div class={cn(pageX, 'flex flex-col gap-8 py-14 lg:gap-16 lg:pt-32 lg:pb-[136px]')}>
           <div class="flex flex-col gap-6 lg:gap-9" data-reveal>
             <div class="flex flex-wrap items-end justify-between gap-6">
@@ -401,7 +401,7 @@ function Inspiration(handle: Handle<{ tab: HomeTab; recipes: RecipeSummary[] }>)
                     <a
                       href={item.key === 'populer' ? '/#inspirasi' : `/?tab=${item.key}#inspirasi`}
                       aria-current={tab === item.key ? 'true' : undefined}
-                      class={tabsTriggerClass(tab === item.key)}
+                      class={tabsTriggerClass(tab === item.key, tab === item.key ? 'bg-surface-dark' : 'text-ink')}
                     >
                       {item.label}
                     </a>
@@ -723,7 +723,7 @@ function Pricing(_handle: Handle) {
                   />
                   {option.label}
                   {option.value === 'tahunan' && (
-                    <span class="rounded-full border border-accent-strong bg-accent-subtle px-2 py-0.5 text-[11px] text-accent-strong">
+                    <span class="rounded-full bg-accent-subtle px-2 py-0.5 text-[11px] text-accent-strong">
                       Hemat 20%
                     </span>
                   )}
@@ -767,7 +767,7 @@ function PlanCard(handle: Handle<{ plan: Plan }>) {
       >
         <div class="flex flex-col gap-5">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h3 class={cn('rounded-full border px-3.5 py-1.5 text-[13px] tracking-[0.02em]', dark ? 'border-white' : 'border-outline')}>
+            <h3 class={cn('rounded-full px-3.5 py-1.5 text-[13px] tracking-[0.02em]', dark ? 'bg-white/15' : 'bg-hover')}>
               {plan.name}
             </h3>
             {dark && (
@@ -798,7 +798,7 @@ function PlanCard(handle: Handle<{ plan: Plan }>) {
             href={routes.auth.register.index.href()}
             variant={dark ? 'default' : 'outline'}
             size="lg"
-            class={cn('w-full', !dark && 'bg-transparent')}
+            class="w-full"
           >
             {plan.cta}
             {dark && <Icon name="arrow-right" />}
@@ -935,7 +935,7 @@ function FinalCta(handle: Handle<{ recipes: RecipeSummary[]; featured: RecipeSum
                 href={routes.recipes.index.href()}
                 variant="outline"
                 size="lg"
-                class="border-white bg-transparent text-white hover:bg-white/10"
+                class="bg-white/15 text-white hover:bg-white/25 active:bg-white/30"
               >
                 Jelajahi resep
               </ButtonLink>

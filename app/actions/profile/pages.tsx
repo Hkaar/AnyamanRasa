@@ -122,7 +122,7 @@ export function ProfilePage(handle: Handle<ProfilePageProps>) {
                     aria-current={active ? 'page' : undefined}
                     class={tabsTriggerClass(
                       active,
-                      cn('flex-1 lg:flex-none', item.count !== undefined && 'lg:pr-2.5 lg:pl-[18px]', active && 'border-ink bg-ink'),
+                      cn('flex-1 lg:flex-none', item.count !== undefined && 'lg:pr-2.5 lg:pl-[18px]'),
                     )}
                   >
                     {item.label}
@@ -252,7 +252,7 @@ export function ProfileEditPage(
                   {...fieldAttrs('avatar', errors.avatar)}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  class="text-sm tracking-[0.28px] file:mr-3 file:cursor-pointer file:rounded-sm file:border file:border-outline file:bg-bg file:px-3 file:py-2 file:text-sm file:text-ink hover:file:bg-hover"
+                  class="text-sm tracking-[0.28px] file:mr-3 file:cursor-pointer file:rounded-sm file:border-0 file:bg-hover file:px-3 file:py-2 file:text-sm file:text-ink hover:file:bg-hover-strong"
                 />
                 {profile.avatarUrl && (
                   <label class="flex items-center gap-2 text-[13px] tracking-[0.26px] text-muted">

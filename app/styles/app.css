@@ -13,19 +13,27 @@
   --color-bg: #ffffff;
   --color-subtle: #faf6f1;
   --color-hover: #f4ece3;
+  /* State fills: controls are shaped by tinted fills, not borders (pen.dev "Status" rows). */
+  --color-hover-strong: #eaddcf;
+  --color-pressed: #dfcdba;
   --color-ink: #2a1f1a;
   --color-muted: #76655b;
   --color-faint: #a09186;
   --color-line: #ece3da;
   --color-line-strong: #c9b8a8;
-  /* Outlined controls (Button/Secondary, tags, chips). */
+  /* Hairline outlines that remain in the design (pricing toggle, FAQ markers). */
   --color-outline: #9e8e82;
   --color-accent: #d2693f;
   --color-accent-strong: #a8491f;
   --color-accent-subtle: #fbede5;
+  --color-accent-pressed: #8c3b17;
+  /* Focus ring: accent at 40% (pen.dev focus-ring #D2693F66). */
+  --color-focus-ring: #d2693f66;
   /* Dark brown surfaces: Button/Accent, footer, selected chips, featured cards. */
   --color-surface-dark: #3e2f28;
   --color-surface-dark-line: #5a4840;
+  /* Button/Accent pressed and Chip/Selected pressed. */
+  --color-night: #1c1612;
   --color-error: #b42318;
   --color-error-subtle: #fef3f2;
   --color-warning: #8a6a2e;
@@ -36,6 +44,11 @@
   --color-coral: #e8916a;
   --color-sand: #d7b89a;
   --color-mist: #f2f3f4;
+  /* Hover (lilac) and focus/open (pink) fills of inputs, selects and tabs. */
+  --color-lilac: #f3e6d8;
+  --color-pink: #ebcfc0;
+  --color-success-subtle: #dde3c9;
+  --color-success: #4f6b2f;
 
   --font-sans: 'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif;
 

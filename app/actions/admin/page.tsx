@@ -225,12 +225,12 @@ export function AdminRecipesPage(handle: Handle<AdminRecipesPageProps>) {
                 {filters.page > 1 ? (
                   <ButtonLink href={`${base}?${query(filters.page - 1)}`} variant="outline" size="sm" class="px-3">Sebelumnya</ButtonLink>
                 ) : (
-                  <span class={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'px-3 opacity-40')} aria-disabled="true">Sebelumnya</span>
+                  <span class={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'px-3')} aria-disabled="true">Sebelumnya</span>
                 )}
                 {last < total ? (
                   <ButtonLink href={`${base}?${query(filters.page + 1)}`} variant="outline" size="sm" class="px-3">Berikutnya</ButtonLink>
                 ) : (
-                  <span class={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'px-3 opacity-40')} aria-disabled="true">Berikutnya</span>
+                  <span class={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'px-3')} aria-disabled="true">Berikutnya</span>
                 )}
               </div>
             </div>

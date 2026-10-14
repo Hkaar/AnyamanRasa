@@ -14,8 +14,8 @@ import { cn, pageX } from '../../ui/utils.ts'
 
 const headingClass = 'text-[36px] leading-10 font-normal tracking-[-0.36px] text-ink lg:text-[52px] lg:leading-[57px] lg:tracking-[-0.52px]'
 const leadClass = 'text-sm leading-[21px] tracking-[0.28px] text-muted lg:text-base lg:leading-6 lg:tracking-[0.32px]'
-/** Design inputs: 14px text, hairline border on desktop (shared inputClass keeps the stronger border on mobile). */
-const authInputClass = 'text-[15px] tracking-[0.28px] lg:border-line lg:text-sm'
+/** Design inputs: 15px text on mobile, 14px on desktop. */
+const authInputClass = 'text-[15px] tracking-[0.28px] lg:text-sm'
 
 type AuthPanel = 'login' | 'register'
 

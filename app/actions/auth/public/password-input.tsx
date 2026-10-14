@@ -49,7 +49,7 @@ export const PasswordInput = clientEntry(
                 placeholder={placeholder}
                 aria-invalid={invalid ? 'true' : undefined}
                 aria-describedby={`${id}-help`}
-                class={cn(inputClass, 'h-11 pr-11 text-[15px] tracking-[0.28px] lg:border-line lg:text-sm', extraClass)}
+                class={cn(inputClass, 'h-11 pr-11 text-[15px] tracking-[0.28px] lg:text-sm', extraClass)}
                 mix={on('input', (event) => {
                   value = event.currentTarget.value
                   if (meter) handle.update()

@@ -46,14 +46,17 @@ export function RecipeCard(handle: Handle<RecipeCardProps>) {
     let titleLink = (
       <a
         href={routes.recipes.show.href({ id: recipe.id })}
-        class="after:absolute after:inset-0 after:rounded-md focus-visible:outline-none group-has-[a:focus-visible]:underline"
+        class="transition-colors after:absolute after:inset-0 after:rounded-lg group-hover:text-accent-strong focus-visible:outline-none group-has-[a:focus-visible]:underline"
       >
         {recipe.title}
       </a>
     )
 
     return (
-      <article class={cn('group relative flex flex-col gap-3.5', (compact || mobileCompact) && 'max-md:gap-2.5', compact && 'gap-2.5', handle.props.class)}>
+      // Recipe Card/Hover: a cream panel grows around the card on pointer hover; the negative
+      // margins cancel its padding so the grid does not shift. Cream sections set
+      // --card-hover to white so the panel still shows.
+      <article class={cn('group relative flex flex-col gap-3.5 rounded-lg transition-colors lg:-mx-2.5 lg:-mt-2.5 lg:-mb-4 lg:p-2.5 lg:pb-4 lg:hover:bg-(--card-hover,var(--color-hover))', (compact || mobileCompact) && 'max-md:gap-2.5', compact && 'gap-2.5', handle.props.class)}>
         <div class={cn('overflow-hidden rounded-md bg-hover', IMAGE_HEIGHT[size], mobileCompact && 'max-md:aspect-auto max-md:h-40')}>
           {recipe.imageUrl ? (
             <img

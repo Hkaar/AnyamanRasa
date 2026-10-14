@@ -31,7 +31,7 @@ export function Field(handle: Handle<FieldProps>) {
     let { id, label, error, help, success, required, children } = handle.props
     return (
       <div data-slot="field" data-invalid={error ? 'true' : undefined} class={cn('flex flex-col gap-1.5', handle.props.class)}>
-        <Label for={id}>
+        <Label for={id} class={error ? 'text-error' : undefined}>
           {label}
           {required && <span class="text-[11px] font-medium text-accent-strong">Wajib</span>}
         </Label>

@@ -89,7 +89,7 @@ export const IngredientCombobox = clientEntry(
             {label}
           </label>
           <div class="relative">
-            <div class="flex h-[52px] items-center gap-2.5 rounded-md border border-outline bg-bg pr-2 pl-4 focus-within:border-ink focus-within:ring-[0.5px] focus-within:ring-ink lg:h-14">
+            <div class="flex h-[52px] items-center gap-2.5 rounded-md bg-hover pr-2 pl-4 transition-colors hover:bg-lilac focus-within:bg-pink lg:h-14">
               <Icon name="plus" size={18} class="text-ink" />
               <input
                 id={inputId}

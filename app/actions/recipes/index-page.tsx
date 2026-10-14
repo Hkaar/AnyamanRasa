@@ -58,7 +58,7 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
             </div>
             <div
               role="search"
-              class="flex h-[52px] w-full items-center gap-2.5 rounded-md border border-outline bg-bg pr-2 pl-4 focus-within:border-ink lg:w-[480px]"
+              class="flex h-[52px] w-full items-center gap-2.5 rounded-md bg-hover pr-2 pl-4 transition-colors hover:bg-lilac focus-within:bg-pink lg:w-[480px]"
             >
               <Icon name="search" size={18} class="text-muted" />
               <label for="recipe-search" class="sr-only">
@@ -84,10 +84,10 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
                 <details class="group relative" data-pop>
                   <summary
                     class={cn(
-                      'flex h-10 cursor-pointer list-none items-center gap-2 rounded-md border pr-3.5 pl-4 text-[13px] [&::-webkit-details-marker]:hidden',
+                      'flex h-10 cursor-pointer list-none items-center gap-2 rounded-md pr-3 pl-3.5 text-[13px] transition-colors [&::-webkit-details-marker]:hidden',
                       selectedCategories.length > 0
-                        ? 'border-surface-dark bg-surface-dark text-white hover:bg-ink'
-                        : 'border-outline bg-bg hover:bg-subtle',
+                        ? 'bg-surface-dark text-white hover:bg-ink'
+                        : 'bg-hover hover:bg-lilac group-open:bg-pink',
                     )}
                   >
                     <span class={selectedCategories.length > 0 ? 'text-white' : 'text-muted'}>Kategori</span>
@@ -97,7 +97,7 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
                       class={cn('group-open:rotate-180', selectedCategories.length > 0 ? 'text-white' : 'text-muted')}
                     />
                   </summary>
-                  <fieldset class="absolute top-[calc(100%+6px)] left-0 z-30 grid max-h-80 w-64 overflow-y-auto rounded-lg border border-line-strong bg-bg p-1.5 shadow-modal">
+                  <fieldset class="absolute top-[calc(100%+6px)] left-0 z-30 grid max-h-80 w-64 overflow-y-auto rounded-md bg-subtle p-1.5 shadow-modal">
                     <legend class="sr-only">Kategori</legend>
                     {categories.map((category) => (
                       <label
@@ -192,7 +192,7 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
           </div>
         </form>
 
-        <section aria-label="Hasil resep" class="bg-hover">
+        <section aria-label="Hasil resep" class="bg-hover [--card-hover:var(--color-bg)]">
           <div class={cn(pageX, 'flex flex-col gap-12 pt-10 pb-20 lg:gap-16 lg:pt-20 lg:pb-32')}>
           {recipes.length === 0 ? (
             <div

@@ -33,11 +33,10 @@ export interface SelectProps {
   class?: string
 }
 
+// pen.dev Select states: cream fill, lilac on hover, pink while open (no borders).
 const TRIGGER = {
-  inline:
-    'h-10 gap-2 rounded-md border border-outline bg-bg pr-3 pl-4 text-[13px] hover:bg-subtle group-open/select:border-accent',
-  field:
-    'h-11 w-full justify-between gap-2 rounded-md border border-line-strong bg-bg px-3.5 text-sm group-open/select:border-accent',
+  inline: 'h-10 gap-2 rounded-md pr-3 pl-3.5 text-[13px]',
+  field: 'h-11 w-full justify-between gap-2 rounded-md px-3.5 text-sm',
 }
 
 export function Select(handle: Handle<SelectProps>) {
@@ -55,28 +54,34 @@ export function Select(handle: Handle<SelectProps>) {
         <summary
           class={cn(
             summaryResetClass,
-            'flex items-center whitespace-nowrap text-ink outline-none transition-colors focus-visible:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/15',
+            'flex items-center bg-hover whitespace-nowrap text-ink outline-none transition-colors hover:bg-lilac focus-visible:ring-[3px] focus-visible:ring-focus-ring group-open/select:bg-pink',
             TRIGGER[variant],
           )}
           aria-label={label ? undefined : accessibleName}
         >
-          {label && <span class="text-muted">{label}</span>}
+          {label && <span class="text-muted transition-colors group-hover/select:text-ink group-open/select:text-ink">{label}</span>}
           <span data-select-value class={cn('truncate', variant === 'inline' && 'font-medium')}>
             {selected?.label}
           </span>
-          <Icon name="chevron-down" class="ml-auto shrink-0 text-muted transition-transform group-open/select:rotate-180" />
+          <Icon name="chevron-down" class="ml-auto shrink-0 text-muted transition-transform group-hover/select:text-ink group-open/select:rotate-180 group-open/select:text-accent-strong" />
         </summary>
         <fieldset
           class={cn(
             dropdownContentClass,
-            'top-[calc(100%+6px)] max-h-72 min-w-full overflow-y-auto rounded-md',
+            'top-[calc(100%+6px)] max-h-72 min-w-full overflow-y-auto rounded-md bg-subtle',
             variant === 'inline' && 'min-w-48',
             align === 'end' ? 'right-0' : 'left-0',
           )}
         >
           <legend class="sr-only">{accessibleName}</legend>
           {options.map((option) => (
-            <label key={option.value} class={cn(dropdownItemClass, 'has-focus-visible:bg-hover has-checked:font-medium')}>
+            <label
+              key={option.value}
+              class={cn(
+                dropdownItemClass,
+                'rounded-sm text-[13px] has-focus-visible:bg-hover has-checked:bg-accent-subtle has-checked:font-medium has-checked:text-accent-strong',
+              )}
+            >
               <input
                 type="radio"
                 name={name}

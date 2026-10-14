@@ -47,6 +47,9 @@ const COLOR = {
   warning: '#8A6A2E',
   warningSubtle: '#F8F0E1',
   surfaceDark: '#3E2F28',
+  lilac: '#F3E6D8',
+  pink: '#EBCFC0',
+  peach: '#F2C9A0',
 }
 
 const EDGE_COLORS: Record<GraphEdgeKind, string> = {
@@ -169,12 +172,14 @@ export const GraphExplorer = clientEntry(
     function select(key: NodeKey | null) {
       let wasOpen = selected !== null
       selected = key
-      cy?.nodes().removeClass('selected')
+      cy?.nodes().removeClass('selected dimmed')
       cy?.edges().removeClass('highlight')
       if (key && cy) {
         let node = cy.getElementById(key)
         node.addClass('selected')
         node.connectedEdges().addClass('highlight')
+        // Graph Node/*/Dimmed: everything outside the selection's direct neighbourhood.
+        cy.nodes().difference(node.closedNeighborhood()).addClass('dimmed')
       }
       let opening = key !== null && !wasOpen
       let closing = key === null && wasOpen
@@ -292,6 +297,14 @@ export const GraphExplorer = clientEntry(
         console.error(cause)
       }
       cy.on('tap', 'node', (event) => select(event.target.id() as NodeKey))
+      cy.on('mouseover', 'node', (event) => {
+        event.target.addClass('hover')
+        container.style.cursor = 'pointer'
+      })
+      cy.on('mouseout', 'node', (event) => {
+        event.target.removeClass('hover')
+        container.style.cursor = ''
+      })
       cy.on('dbltap', 'node', (event) => load({ center: event.target.id() }, true))
       cy.on('tap', (event) => {
         if (event.target === cy) select(null)
@@ -443,7 +456,7 @@ export const GraphExplorer = clientEntry(
             </div>
             <div class="flex items-center gap-3">
               <div class="relative hidden lg:block">
-                <label class="flex h-10 w-[300px] items-center gap-2.5 rounded-md border border-outline bg-bg px-3 focus-within:border-ink">
+                <label class="flex h-10 w-[300px] items-center gap-2.5 rounded-md bg-hover px-3 transition-colors hover:bg-lilac focus-within:bg-pink">
                   <Icon name="search" class="text-muted" />
                   <span class="sr-only">Cari resep atau bahan di graf</span>
                   <input
@@ -934,20 +947,20 @@ function graphStyles(): StylesheetJson {
         shape: 'ellipse',
         width: 64,
         height: 64,
-        'background-color': COLOR.hover,
+        // White under the photo so image-less recipes still read on the cream canvas.
+        'background-color': COLOR.bg,
         'background-image': 'data(image)',
         'background-fit': 'cover',
-        'border-width': 1,
-        'border-color': COLOR.lineStrong,
+        // The ring is drawn by the border; it stays transparent until hover/selection.
+        'border-width': 3,
+        'border-color': COLOR.peach,
+        'border-opacity': 0,
         'text-valign': 'bottom',
         'text-margin-y': 8,
-        'text-background-color': COLOR.bg,
+        'text-background-color': COLOR.hover,
         'text-background-opacity': 1,
         'text-background-shape': 'round-rectangle',
         'text-background-padding': '5px',
-        'text-border-width': 1,
-        'text-border-color': COLOR.line,
-        'text-border-opacity': 1,
       },
     },
     { selector: 'node.no-image', style: { 'background-image': 'none' } },
@@ -958,16 +971,15 @@ function graphStyles(): StylesheetJson {
         'corner-radius': 14,
         width: 'data(labelWidth)',
         height: 30,
-        'background-color': COLOR.subtle,
-        'background-image': nodeDot(COLOR.accentSubtle, COLOR.accent, 'leaf'),
+        'background-color': COLOR.lilac,
+        'background-image': nodeDot(COLOR.bg, COLOR.accent, 'leaf'),
         'background-fit': 'none',
         'background-clip': 'none',
         'background-width': 18,
         'background-height': 18,
         'background-position-x': 8,
         'background-position-y': '50%',
-        'border-width': 1,
-        'border-color': COLOR.lineStrong,
+        'border-width': 0,
         'text-valign': 'center',
         'text-halign': 'center',
         'text-margin-x': 12,
@@ -983,30 +995,61 @@ function graphStyles(): StylesheetJson {
       style: {
         width: 104,
         height: 104,
-        'border-width': 3,
         'border-color': COLOR.ink,
+        'border-opacity': 1,
         'font-size': 13,
         'font-weight': 600,
         color: COLOR.bg,
         'text-background-color': COLOR.surfaceDark,
         'text-background-padding': '6px',
-        'text-border-color': COLOR.surfaceDark,
       },
     },
     {
       selector: 'node[type = "ingredient"].center',
       style: { width: 'data(labelWidth)', height: 36, 'background-color': COLOR.surfaceDark, 'text-background-opacity': 0 },
     },
+    // Graph Node/*/{Hover,Selected,Dimmed} from the design system: tinted fills, no outlines.
+    {
+      selector: 'node[type = "recipe"].hover',
+      style: { 'border-color': COLOR.peach, 'border-opacity': 1, 'text-background-color': COLOR.pink },
+    },
+    { selector: 'node[type = "ingredient"].hover', style: { 'background-color': COLOR.pink } },
+    {
+      selector: 'node.dimmed',
+      style: {
+        color: COLOR.faint,
+        'background-image-opacity': 0.35,
+        'text-background-color': COLOR.subtle,
+      },
+    },
+    {
+      selector: 'node[type = "ingredient"].dimmed',
+      style: {
+        'background-color': COLOR.subtle,
+        'background-image': nodeDot(COLOR.hover, COLOR.lineStrong, 'leaf'),
+        'background-image-opacity': 1,
+      },
+    },
+    {
+      selector: 'node[type = "ingredient"].substitute.dimmed',
+      style: { 'background-image': nodeDot(COLOR.hover, COLOR.lineStrong, 'arrow-left-right') },
+    },
     {
       selector: 'node.selected',
       style: {
-        'border-width': 3,
         'border-color': COLOR.accent,
-        color: COLOR.accentStrong,
-        'font-weight': 600,
-        'text-background-color': COLOR.accentSubtle,
-        'text-border-color': COLOR.accent,
+        'border-opacity': 1,
+        color: COLOR.bg,
+        'text-background-color': COLOR.accent,
       },
+    },
+    {
+      selector: 'node[type = "ingredient"].selected',
+      style: { 'background-color': COLOR.accent, 'background-image': nodeDot(COLOR.bg, COLOR.accentStrong, 'leaf') },
+    },
+    {
+      selector: 'node[type = "ingredient"].substitute.selected',
+      style: { 'background-image': nodeDot(COLOR.bg, COLOR.accentStrong, 'arrow-left-right') },
     },
     {
       selector: 'edge',

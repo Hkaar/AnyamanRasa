@@ -55,7 +55,7 @@ export const UsernameInput = clientEntry(
             defaultValue={value}
             aria-invalid={(status && !status.available) || (!status && error) ? 'true' : undefined}
             aria-describedby={`${id}-status`}
-            class={cn(inputClass, 'h-12 text-[15px] tracking-[0.28px] lg:h-11 lg:border-line lg:text-sm')}
+            class={cn(inputClass, 'h-12 text-[15px] tracking-[0.28px] lg:h-11 lg:text-sm')}
             mix={on('input', (event) => check(event.currentTarget.value.trim().toLowerCase()))}
           />
           <p id={`${id}-status`} class={cn('text-xs tracking-[0.24px]', tone)} aria-live="polite">
