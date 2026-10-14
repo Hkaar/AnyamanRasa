@@ -11,7 +11,7 @@ import { findProfileByUsername } from '../../data/users.ts'
 import type { RecipeSummary } from '../../domain/types.ts'
 import { routes } from '../../routes.ts'
 import { getShell, notFound } from '../shell.tsx'
-import { PROFILE_PAGE_SIZE, type ProfileTab, ProfilePage } from './pages.tsx'
+import { PROFILE_PAGE_SIZE, ProfileCardsChunk, type ProfileTab, ProfilePage } from './pages.tsx'
 
 const TABS: ProfileTab[] = ['resep', 'variasi', 'disimpan']
 /** Variations previewed under the recipe grid. */
@@ -33,6 +33,23 @@ export default createController(routes.profile, {
       let sortParam = params.get('urut')
       let sort: AuthorSort = AUTHOR_SORTS.find((value) => value === sortParam) ?? 'terbaru'
       let page = Math.max(1, Math.min(50, Math.floor(Number(params.get('hal'))) || 1))
+
+      // Infinite scroll asks for one page of a tab's cards at a time.
+      if (params.get('bagian') === 'kartu' && tab !== 'disimpan') {
+        let options = { includeUnpublished: isOwn, kind: tab === 'variasi' ? 'variation' : 'original' } as const
+        let [items, count] = await Promise.all([
+          listRecipesByAuthor(db, profile.id, {
+            ...options,
+            sort,
+            limit: PROFILE_PAGE_SIZE,
+            offset: (page - 1) * PROFILE_PAGE_SIZE,
+          }),
+          countRecipesByAuthor(db, profile.id, options),
+        ])
+        return context.render(
+          <ProfileCardsChunk username={profile.username} tab={tab} sort={sort} page={page} recipes={items} total={count} />,
+        )
+      }
 
       let recipes: RecipeSummary[]
       let total: number

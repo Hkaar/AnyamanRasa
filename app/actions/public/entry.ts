@@ -5,6 +5,7 @@ import {
 } from 'remix/multiple-import-maps-polyfill'
 import { run } from 'remix/component'
 
+import { initLoadMore } from './load-more.ts'
 import { startPageMotion } from './motion.ts'
 
 const app = run({
@@ -86,3 +87,4 @@ document.addEventListener('click', (event) => {
 })
 
 startPageMotion()
+initLoadMore()

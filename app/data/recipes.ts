@@ -411,6 +411,8 @@ export interface AuthorRecipeOptions {
   sort?: AuthorSort
   /** Maximum rows to return; all when omitted. */
   limit?: number
+  /** Rows to skip (infinite scroll pages). */
+  offset?: number
 }
 
 function authorConditions(userId: string, options: AuthorRecipeOptions): SqlStatement {
@@ -428,11 +430,12 @@ export async function listRecipesByAuthor(
 ): Promise<RecipeSummary[]> {
   let orderBy = options.sort === 'populer' ? sql`${saveCount} desc, r.created_at desc` : sql`r.created_at desc`
   let limit = options.limit === undefined ? sql`` : sql`limit ${options.limit}`
+  let offset = options.offset ? sql`offset ${options.offset}` : sql``
   let rows = await queryRows<SummaryRow>(
     db,
     sql`select ${summaryColumns} from recipes r ${summaryJoins}
         where ${authorConditions(userId, options)}
-        order by ${orderBy}, r.id ${limit}`,
+        order by ${orderBy}, r.id ${limit} ${offset}`,
   )
   return rows.map(toSummary)
 }

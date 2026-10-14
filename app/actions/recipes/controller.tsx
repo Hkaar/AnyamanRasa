@@ -17,14 +17,19 @@ import { diffIngredients } from '../../domain/lineage.ts'
 import { routes } from '../../routes.ts'
 import { getShell, notFound, requireViewer, safeRedirectTarget, setFlash } from '../shell.tsx'
 import { parseRecipeFilters } from './filters.ts'
-import { RecipeIndexPage } from './index-page.tsx'
+import { RecipeCardsChunk, RecipeIndexPage } from './index-page.tsx'
 import { RecipeShowPage } from './show-page.tsx'
 
 export default createController(routes.recipes, {
   actions: {
     async index(context) {
       let filters = parseRecipeFilters(context.url.searchParams)
-      // "Muat lebih banyak" shows every page up to the requested one.
+      // Infinite scroll asks for one page of cards at a time.
+      if (context.url.searchParams.get('bagian') === 'kartu') {
+        let result = await searchRecipes(context.db, filters)
+        return context.render(<RecipeCardsChunk filters={filters} recipes={result.items} total={result.total} />)
+      }
+      // "Muat lebih banyak" without JavaScript shows every page up to the requested one.
       let [result, categories] = await Promise.all([
         searchRecipes(context.db, { ...filters, page: 1, pageSize: filters.page * filters.pageSize }),
         listUsedCategories(context.db),

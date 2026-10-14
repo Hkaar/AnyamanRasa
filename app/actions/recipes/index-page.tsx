@@ -37,11 +37,7 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
     let selectedCategories = categories.filter((c) => filters.categoryIds.includes(c.id))
     let [featureA, featureB, ...rest] = recipes
     let shown = recipes.length
-    let hrefWith = (overrides: Partial<RecipeFilters>) => {
-      let params = filtersToParams(filters, { page: 1, ...overrides })
-      let query = params.toString()
-      return query ? `${base}?${query}` : base
-    }
+    let hrefWith = (overrides: Partial<RecipeFilters>) => recipesHref(filters, overrides)
 
     return (
       <SiteLayout
@@ -227,30 +223,66 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
                 )}
               </div>
               {rest.length > 0 && (
-                <div class="grid grid-cols-2 gap-x-3.5 gap-y-8 md:gap-x-6 md:gap-y-12 lg:grid-cols-4 lg:gap-y-16" data-reveal-group>
+                <div
+                  id="hasil-resep"
+                  class="grid grid-cols-2 gap-x-3.5 gap-y-8 md:gap-x-6 md:gap-y-12 lg:grid-cols-4 lg:gap-y-16"
+                  data-reveal-group
+                >
                   {rest.map((recipe) => (
                     <RecipeCard key={recipe.id} recipe={recipe} headingLevel={2} />
                   ))}
                 </div>
               )}
-              <div class="flex flex-col items-center gap-3 pt-2">
-                <p class="text-[13px] text-muted">
-                  Menampilkan {shown} dari {formatCount(total)} resep
-                </p>
-                {shown < total && (
-                  <ButtonLink
-                    href={hrefWith({ page: filters.page + 1 })} variant="dark" class="h-auto px-6 py-3.5 text-[15px]"
-                    data-preserve-scroll
-                  >
-                    Muat lebih banyak
-                  </ButtonLink>
-                )}
-              </div>
+              <LoadMore
+                listId="hasil-resep"
+                shown={shown}
+                total={total}
+                countLabel={(count) => resultCount(count, total)}
+                href={hrefWith({ page: filters.page + 1 })}
+                fragmentHref={recipeCardsHref(filters, filters.page + 1)}
+              />
             </>
           )}
           </div>
         </section>
       </SiteLayout>
+    )
+  }
+}
+
+function recipesHref(filters: RecipeFilters, overrides: Partial<RecipeFilters> = {}): string {
+  let base = routes.recipes.index.href()
+  let query = filtersToParams(filters, { page: 1, ...overrides }).toString()
+  return query ? `${base}?${query}` : base
+}
+
+/** One page of result cards only (infinite scroll), rendered by <RecipeCardsChunk>. */
+export function recipeCardsHref(filters: RecipeFilters, page: number): string {
+  let params = filtersToParams(filters, { page })
+  params.set('bagian', 'kartu')
+  return `${routes.recipes.index.href()}?${params}`
+}
+
+function resultCount(shown: number, total: number): string {
+  return `Menampilkan ${formatCount(shown)} dari ${formatCount(total)} resep`
+}
+
+/** Fragment for infinite scroll: the cards of `filters.page` and the next page's links. */
+export function RecipeCardsChunk(handle: Handle<{ filters: RecipeFilters; recipes: RecipeSummary[]; total: number }>) {
+  return () => {
+    let { filters, recipes, total } = handle.props
+    let shown = Math.min(total, (filters.page - 1) * filters.pageSize + recipes.length)
+    let more = shown < total && recipes.length > 0
+    return (
+      <LoadMoreChunk
+        countLabel={resultCount(shown, total)}
+        next={more ? recipeCardsHref(filters, filters.page + 1) : undefined}
+        nextHref={more ? recipesHref(filters, { page: filters.page + 1 }) : undefined}
+      >
+        {recipes.map((recipe) => (
+          <RecipeCard key={recipe.id} recipe={recipe} headingLevel={2} />
+        ))}
+      </LoadMoreChunk>
     )
   }
 }

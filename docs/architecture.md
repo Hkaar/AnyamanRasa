@@ -92,7 +92,9 @@ Each component is themed with the pen.dev tokens rather than shadcn's defaults, 
 | --- | --- | --- |
 | `button.tsx` | `Button`, `ButtonLink`, `buttonVariants` | Button/Primary (`default`, terracotta), Secondary (`outline`), Ghost, Button/Accent (`dark`, brown), plus `accent` (soft tint), `destructive` and `link` |
 | `badge.tsx` | `Badge`, `badgeVariants` | Tag (`default`), Chip/Ingredient (`chip`), Chip/Selected (`selected`), status pills |
-| `input.tsx` | `Input`, `Textarea`, `NativeSelect`, class recipes | Form Field controls |
+| `input.tsx` | `Input`, `Textarea`, class recipes | Form Field controls |
+| `load-more.tsx` | `LoadMore`, `LoadMoreChunk` | "Muat lebih banyak" with infinite scroll: a link to the next cumulative page without JavaScript; with it, `public/load-more.ts` appends the next page's fragment (`?bagian=kartu`) as the button nears the viewport (Jelajahi Resep, profile tabs) |
+| `select.tsx` | `Select` (`inline`, `field`) | Select / Dropdown: a `<details>` dropdown of radios, so it submits with forms and works without JavaScript |
 | `label.tsx` | `Label`, `Field`, `FieldMessage`, `fieldAttrs` | Form Field label and helper/error |
 | `card.tsx`, `alert.tsx`, `empty.tsx`, `skeleton.tsx`, `separator.tsx`, `avatar.tsx`, `breadcrumb.tsx`, `kbd.tsx`, `toast.tsx` | Same names as shadcn | Panels, notices, Empty State, loading, avatar, breadcrumb, Toast |
 | `tabs.tsx`, `table.tsx`, `dialog.tsx`, `dropdown-menu.tsx`, `toggle-group.tsx` | Class recipes or no-JS components | Tabs as links, admin table, `<dialog>` modal, `<details>` menus, segmented control |

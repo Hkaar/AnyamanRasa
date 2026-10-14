@@ -23,6 +23,27 @@ describe('recipe discovery', () => {
     assert.match(html, /≤\s15\smenit/)
   })
 
+  it('serves the next page of cards as a fragment for infinite scroll', async () => {
+    let client = createClient()
+    let page = await (await client.get('/resep')).text()
+    let total = Number(/Menampilkan 10 dari (\d+) resep/.exec(page)?.[1])
+    assert.ok(total > 10, 'the seed has more than one page of recipes')
+    assert.match(page, /data-load-more="\/resep\?hal=2&amp;bagian=kartu"/)
+
+    let fragment = await (await client.get('/resep?hal=2&bagian=kartu')).text()
+    assert.doesNotMatch(fragment, /<html|<header/)
+    assert.equal(fragment.match(/<article/g)?.length, Math.min(10, total - 10))
+    assert.match(fragment, new RegExp(`data-count="Menampilkan ${Math.min(20, total)} dari ${total} resep"`))
+    if (total > 20) assert.match(fragment, /data-next="\/resep\?hal=3&amp;bagian=kartu"/)
+    else assert.doesNotMatch(fragment, /data-next=/)
+  })
+
+  it('keeps filters in the infinite scroll links', async () => {
+    let fragment = await (await createClient().get('/resep?urut=terbaru&hal=1&bagian=kartu')).text()
+    assert.match(fragment, /data-load-more-chunk/)
+    assert.match(fragment, /urut=terbaru/)
+  })
+
   it('ignores invalid filter values instead of failing', async () => {
     let response = await createClient().get('/resep?kategori=abc&kesulitan=mustahil&urut=zzz&hal=-4')
     assert.equal(response.status, 200)

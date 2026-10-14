@@ -174,30 +174,23 @@ export function ProfilePage(handle: Handle<ProfilePageProps>) {
               }
             />
           ) : (
-            <div class="grid gap-8 md:grid-cols-2 md:gap-x-6 md:gap-y-10 lg:grid-cols-4 lg:gap-y-12" data-reveal-group>
+            <div id="resep-profil" class="grid gap-8 md:grid-cols-2 md:gap-x-6 md:gap-y-10 lg:grid-cols-4 lg:gap-y-12" data-reveal-group>
               {recipes.map((recipe) => (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  hideAuthor={tab !== 'disimpan'}
-                  showLineage={tab === 'variasi'}
-                  size="default"
-                  headingLevel={2}
-                />
+                <ProfileRecipeCard key={recipe.id} recipe={recipe} tab={tab} />
               ))}
             </div>
           )}
 
           {recipes.length < total && (
-            <ButtonLink
-              href={tabHref(tab, { ...(sort === 'terbaru' ? {} : { urut: sort }), hal: String(page + 1) })}
+            <LoadMore
+              listId="resep-profil"
               variant="outline"
-              size="lg"
-              class="w-full lg:w-auto lg:self-center"
-              data-preserve-scroll
-            >
-              Muat lebih banyak
-            </ButtonLink>
+              shown={recipes.length}
+              total={total}
+              countLabel={(count) => profileCount(count, total)}
+              href={tabHref(tab, { ...(sort === 'terbaru' ? {} : { urut: sort }), hal: String(page + 1) })}
+              fragmentHref={tabHref(tab, { ...(sort === 'terbaru' ? {} : { urut: sort }), hal: String(page + 1), bagian: 'kartu' })}
+            />
           )}
 
           {tab === 'resep' && variations.length > 0 && (
@@ -302,6 +295,60 @@ export function ProfileEditPage(
           </form>
         </div>
       </SiteLayout>
+    )
+  }
+}
+
+function ProfileRecipeCard(handle: Handle<{ recipe: RecipeSummary; tab: ProfileTab }>) {
+  return () => (
+    <RecipeCard
+      recipe={handle.props.recipe}
+      hideAuthor={handle.props.tab !== 'disimpan'}
+      showLineage={handle.props.tab === 'variasi'}
+      size="default"
+      headingLevel={2}
+    />
+  )
+}
+
+function profileCount(shown: number, total: number): string {
+  return `Menampilkan ${shown} dari ${total} resep`
+}
+
+/** Fragment for infinite scroll: one page of a profile tab's cards and the next page's links. */
+export function ProfileCardsChunk(
+  handle: Handle<{
+    username: string
+    tab: ProfileTab
+    sort: AuthorSort
+    page: number
+    recipes: RecipeSummary[]
+    total: number
+  }>,
+) {
+  return () => {
+    let { username, tab, sort, page, recipes, total } = handle.props
+    let shown = Math.min(total, (page - 1) * PROFILE_PAGE_SIZE + recipes.length)
+    let more = shown < total && recipes.length > 0
+    let href = (extra: Record<string, string>) => {
+      let params = new URLSearchParams({
+        ...(tab === 'resep' ? {} : { tab }),
+        ...(sort === 'terbaru' ? {} : { urut: sort }),
+        hal: String(page + 1),
+        ...extra,
+      })
+      return `${routes.profile.show.href({ username })}?${params}`
+    }
+    return (
+      <LoadMoreChunk
+        countLabel={profileCount(shown, total)}
+        next={more ? href({ bagian: 'kartu' }) : undefined}
+        nextHref={more ? href({}) : undefined}
+      >
+        {recipes.map((recipe) => (
+          <ProfileRecipeCard key={recipe.id} recipe={recipe} tab={tab} />
+        ))}
+      </LoadMoreChunk>
     )
   }
 }
