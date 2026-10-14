@@ -24,6 +24,19 @@ describe('authentication', () => {
     assert.equal(response.headers.get('Location'), '/')
   })
 
+  it('offers Google or email first, then shows the email sign-up form', async () => {
+    let client = createClient()
+    let methods = await (await client.get('/daftar')).text()
+    assert.match(methods, /Daftar dengan Google/)
+    assert.match(methods, /href="\/daftar\?cara=email"/)
+    assert.doesNotMatch(methods, /name="username"/)
+
+    let form = await (await client.get('/daftar?cara=email')).text()
+    assert.match(form, /Daftar dengan email/)
+    assert.match(form, /name="username"/)
+    assert.match(form, /name="confirm"/)
+  })
+
   it('validates registration and checks username availability', async () => {
     let client = createClient()
     let invalid = await client.post('/daftar', { username: 'A!', email: 'bukan-email', password: 'pendek', confirm: 'beda' })

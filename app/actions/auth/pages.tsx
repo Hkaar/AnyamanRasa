@@ -10,7 +10,7 @@ import { UsernameInput } from './public/username-input.tsx'
 import { Button, ButtonLink } from '../../ui/button.tsx'
 import { inputClass } from '../../ui/input.tsx'
 import { Field, fieldAttrs, labelClass } from '../../ui/label.tsx'
-import { cn } from '../../ui/utils.ts'
+import { cn, pageX } from '../../ui/utils.ts'
 
 const headingClass = 'text-[36px] leading-10 font-normal tracking-[-0.36px] text-ink lg:text-[52px] lg:leading-[57px] lg:tracking-[-0.52px]'
 const leadClass = 'text-sm leading-[21px] tracking-[0.28px] text-muted lg:text-base lg:leading-6 lg:tracking-[0.32px]'
@@ -35,7 +35,7 @@ function AuthShell(
     return (
       <Document title={title} bodyClass="bg-bg">
         <div class="flex min-h-dvh flex-col">
-          <header class="flex h-[60px] shrink-0 items-center justify-between px-5 lg:h-[72px] lg:px-10">
+          <header class={cn(pageX, 'flex h-[60px] shrink-0 items-center justify-between lg:h-[72px]')}>
             <Logo />
             <p class="hidden text-sm tracking-[0.26px] text-muted sm:block">
               {prompt}{' '}
@@ -51,14 +51,23 @@ function AuthShell(
               <Icon name="x" size={20} />
             </a>
           </header>
-          <main id="konten" class="flex flex-1 gap-6 px-5 pt-8 pb-6 lg:px-10 lg:pt-2 lg:pb-10">
-            <div class="flex flex-1 flex-col items-center lg:justify-center">
-              <div class="flex w-full max-w-[424px] flex-1 flex-col lg:flex-none">{children}</div>
+          {/* Same container as the landing page (pageX: 120px margins, 1200px content at 1440).
+              Desktop: the 428px form on the left, the feature panel on the right. */}
+          <main
+            id="konten"
+            class={cn(
+              pageX,
+              'flex flex-1 flex-col pt-8 pb-6 lg:pt-2 lg:pb-10',
+              panel && 'lg:grid lg:grid-cols-[minmax(0,428px)_minmax(0,668px)] lg:justify-between lg:gap-12',
+            )}
+          >
+            <div class="flex flex-1 flex-col items-center lg:items-stretch lg:justify-center">
+              <div class="flex w-full max-w-[428px] flex-1 flex-col lg:flex-none">{children}</div>
             </div>
             {panel === 'login' && <LoginPanel />}
             {panel === 'register' && <RegisterPanel />}
           </main>
-          <footer class="hidden justify-between gap-2 px-10 pb-8 text-xs tracking-[0.26px] text-faint lg:flex">
+          <footer class={cn(pageX, 'hidden justify-between gap-2 pb-8 text-xs tracking-[0.26px] text-faint lg:flex')}>
             <p>© 2026 AnyamanRasa</p>
             <p>Kebijakan Privasi · Ketentuan Layanan</p>
           </footer>
@@ -73,7 +82,7 @@ const floatCard = 'absolute rounded-md shadow-[0_16px_40px_#3E2F281F]'
 /** Login feature panel: a decorative collage of what members can do (pantry search, variations). */
 function LoginPanel() {
   return () => (
-    <aside class="hidden flex-1 flex-col justify-center gap-8 self-center overflow-hidden rounded-lg bg-[linear-gradient(#FFFFFF59,#FFFFFF59),linear-gradient(-137deg,var(--color-peach)_0.5%,var(--color-coral)_28%,#EBCFC0_52%,#F3E6D8_76%,var(--color-sand)_99.5%)] p-12 lg:flex">
+    <aside class="hidden min-w-0 flex-col justify-center gap-8 self-center overflow-hidden rounded-lg bg-[linear-gradient(#FFFFFF59,#FFFFFF59),linear-gradient(-137deg,var(--color-peach)_0.5%,var(--color-coral)_28%,#EBCFC0_52%,#F3E6D8_76%,var(--color-sand)_99.5%)] p-12 lg:flex">
       <div class="relative h-[330px] w-full max-w-[572px] shrink-0" aria-hidden="true">
         <div class={cn(floatCard, 'top-[18px] left-[15px] z-0 w-[270px] origin-top-left rotate-3 overflow-hidden bg-bg')}>
           <div class="relative flex h-[180px] items-start bg-accent-subtle p-3.5">
@@ -155,7 +164,7 @@ function LoginPanel() {
 /** Register feature panel: dark card with a decorative activity collage. */
 function RegisterPanel() {
   return () => (
-    <aside class="hidden flex-1 flex-col justify-center gap-8 self-center overflow-hidden rounded-lg bg-surface-dark bg-[radial-gradient(ellipse_65%_40%_at_50%_32%,#D2693F59_0%,#D2693F00_100%)] p-12 lg:flex">
+    <aside class="hidden min-w-0 flex-col justify-center gap-8 self-center overflow-hidden rounded-lg bg-surface-dark bg-[radial-gradient(ellipse_65%_40%_at_50%_32%,#D2693F59_0%,#D2693F00_100%)] p-12 lg:flex">
       <div class="relative h-[430px] w-full max-w-[572px] shrink-0" aria-hidden="true">
         <div class={cn(floatCard, 'top-3.5 left-[120px] z-0 h-[380px] w-[300px] origin-top-left rotate-3 overflow-hidden bg-[linear-gradient(160deg,var(--color-peach),var(--color-coral))]')}>
           <img src="/images/generated-2.webp" alt="" class="size-full scale-125 object-contain" />
@@ -227,9 +236,9 @@ function GoogleMark() {
 
 function Divider() {
   return () => (
-    <div class="flex items-center gap-3 text-xs tracking-[0.24px] text-faint" role="separator" aria-label="atau">
+    <div class="flex items-center gap-3.5 text-[13px] tracking-[0.26px] text-muted" role="separator" aria-label="atau">
       <span class="h-px flex-1 bg-line" />
-      atau dengan email
+      atau masuk dengan email
       <span class="h-px flex-1 bg-line" />
     </div>
   )
@@ -328,78 +337,129 @@ export function LoginPage(handle: Handle<LoginPageProps>) {
 
 export interface RegisterPageProps {
   shell: Shell
+  /** `methods`: choose Google or email (10b). `email`: the email sign-up form (10c). */
+  step?: 'methods' | 'email'
   values?: { username: string; email: string }
   errors?: { username?: string; email?: string; password?: string; confirm?: string; form?: string }
 }
 
+/** Sign-up form step, linked from the methods step (`/daftar?cara=email`). */
+export const registerEmailHref = `${routes.auth.register.index.href()}?cara=email`
+
+const termsClass = 'text-xs leading-[18px] tracking-[0.24px] text-muted'
+
 export function RegisterPage(handle: Handle<RegisterPageProps>) {
   return () => {
-    let { shell, values, errors = {} } = handle.props
+    let { shell, step = 'methods' } = handle.props
     return (
       <AuthShell
-        title="Daftar"
+        title={step === 'email' ? 'Daftar dengan email' : 'Daftar'}
         prompt="Sudah punya akun?"
         linkLabel="Masuk"
         linkHref={routes.auth.login.index.href()}
         panel="register"
       >
-        <div class="flex flex-col gap-7">
-          <div class="flex flex-col gap-2 lg:gap-3.5">
-            <h1 class={headingClass}>Buat akun AnyamanRasa</h1>
-            <p class={leadClass}>
-              Gratis. Simpan resep favorit, tulis resepmu sendiri, dan buat variasi.
-            </p>
-          </div>
-          {errors.form && <FormAlert message={errors.form} />}
-          <GoogleButton shell={shell} label="Daftar dengan Google" />
-          <Divider />
-          <form method="post" action={routes.auth.register.action.href()} class="flex flex-col gap-7" novalidate>
-            <CsrfField token={shell.csrfToken} />
-            <div class="flex flex-col gap-[18px]">
-              <div class="flex flex-col gap-1.5">
-                <label for="username" class={labelClass}>
-                  Nama pengguna
-                </label>
-                <UsernameInput id="username" value={values?.username ?? ''} error={errors.username} />
-              </div>
-              <Field id="email" label="Email" error={errors.email}>
-                <input
-                  {...fieldAttrs('email', errors.email)}
-                  type="email"
-                  autocomplete="email"
-                  required
-                  defaultValue={values?.email ?? ''}
-                  class={cn(inputClass, authInputClass, 'h-12 lg:h-11')}
-                />
-              </Field>
-              <div class="flex flex-col gap-1.5" data-invalid={errors.password ? 'true' : undefined}>
-                <label for="password" class={labelClass}>
-                  Kata sandi
-                </label>
-                <PasswordInput
-                  id="password"
-                  name="password"
-                  autocomplete="new-password"
-                  invalid={Boolean(errors.password)}
-                  help="Minimal 8 karakter, kombinasi huruf dan angka."
-                  error={errors.password}
-                  meter
-                  inputClass="h-12 lg:h-11"
-                />
-              </div>
-              <Field id="confirm" label="Konfirmasi kata sandi" error={errors.confirm}>
-                <PasswordInput id="confirm" name="confirm" autocomplete="new-password" invalid={Boolean(errors.confirm)} inputClass="h-12 lg:h-11" />
-              </Field>
-            </div>
-            <Button type="submit" variant="default" class="h-[52px] text-[15px] lg:h-12">
-              Buat akun
-            </Button>
-            <p class="text-center text-xs leading-[18px] tracking-[0.24px] text-muted lg:text-left">
-              Dengan mendaftar, kamu menyetujui Ketentuan Layanan dan Kebijakan Privasi AnyamanRasa.
-            </p>
-          </form>
-        </div>
+        {step === 'email' ? (
+          <RegisterEmailForm shell={shell} values={handle.props.values} errors={handle.props.errors} />
+        ) : (
+          <RegisterMethods shell={shell} error={handle.props.errors?.form} />
+        )}
       </AuthShell>
+    )
+  }
+}
+
+function RegisterMethods(handle: Handle<{ shell: Shell; error?: string }>) {
+  return () => (
+    <div class="flex flex-1 flex-col gap-8">
+      <div class="flex flex-col gap-2 lg:gap-3.5">
+        <h1 class={headingClass}>Buat akun AnyamanRasa</h1>
+        <p class={leadClass}>Gratis. Simpan resep favorit, tulis resepmu sendiri, dan buat variasi.</p>
+      </div>
+      {handle.props.error && <FormAlert message={handle.props.error} />}
+      <div class="flex flex-col gap-3">
+        <GoogleButton shell={handle.props.shell} label="Daftar dengan Google" />
+        <ButtonLink href={registerEmailHref} variant="outline" class="h-12 w-full gap-2.5 text-[15px] font-medium">
+          <Icon name="mail" size={18} />
+          Daftar dengan email
+        </ButtonLink>
+      </div>
+      <div class="mt-auto flex flex-col gap-8 lg:mt-0">
+        <p class={cn(termsClass, 'text-center')}>
+          Dengan mendaftar, kamu menyetujui Ketentuan Layanan dan Kebijakan Privasi AnyamanRasa.
+        </p>
+        <p class="pt-1 text-center text-[13px] tracking-[0.26px] text-muted">
+          Sudah punya akun?{' '}
+          <a href={routes.auth.login.index.href()} class="font-medium text-ink hover:underline">
+            Masuk
+          </a>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'values' | 'errors'>>) {
+  return () => {
+    let { shell, values, errors = {} } = handle.props
+    return (
+      <div class="flex flex-col gap-7">
+        <a
+          href={routes.auth.register.index.href()}
+          class="flex items-center gap-1.5 self-start text-[13px] font-medium tracking-[0.26px] text-muted hover:text-ink"
+        >
+          <Icon name="arrow-left" />
+          Pilihan daftar lainnya
+        </a>
+        <div class="flex flex-col gap-2 lg:gap-3.5">
+          <h1 class={headingClass}>Daftar dengan email</h1>
+          <p class={leadClass}>Isi data di bawah untuk membuat akun AnyamanRasa-mu.</p>
+        </div>
+        {errors.form && <FormAlert message={errors.form} />}
+        <form method="post" action={routes.auth.register.action.href()} class="flex flex-col gap-7" novalidate>
+          <CsrfField token={shell.csrfToken} />
+          <div class="flex flex-col gap-[18px]">
+            <div class="flex flex-col gap-1.5">
+              <label for="username" class={labelClass}>
+                Nama pengguna
+              </label>
+              <UsernameInput id="username" value={values?.username ?? ''} error={errors.username} />
+            </div>
+            <Field id="email" label="Email" error={errors.email}>
+              <input
+                {...fieldAttrs('email', errors.email)}
+                type="email"
+                autocomplete="email"
+                required
+                defaultValue={values?.email ?? ''}
+                class={cn(inputClass, authInputClass, 'h-12 lg:h-11')}
+              />
+            </Field>
+            <div class="flex flex-col gap-1.5" data-invalid={errors.password ? 'true' : undefined}>
+              <label for="password" class={labelClass}>
+                Kata sandi
+              </label>
+              <PasswordInput
+                id="password"
+                name="password"
+                autocomplete="new-password"
+                invalid={Boolean(errors.password)}
+                help="Minimal 8 karakter, kombinasi huruf dan angka."
+                error={errors.password}
+                meter
+                inputClass="h-12 lg:h-11"
+              />
+            </div>
+            <Field id="confirm" label="Konfirmasi kata sandi" error={errors.confirm}>
+              <PasswordInput id="confirm" name="confirm" autocomplete="new-password" invalid={Boolean(errors.confirm)} inputClass="h-12 lg:h-11" />
+            </Field>
+          </div>
+          <Button type="submit" variant="default" class="h-[52px] text-[15px] lg:h-12">
+            Buat akun
+          </Button>
+          <p class={termsClass}>Dengan mendaftar, kamu menyetujui Ketentuan Layanan dan Kebijakan Privasi AnyamanRasa.</p>
+        </form>
+      </div>
     )
   }
 }

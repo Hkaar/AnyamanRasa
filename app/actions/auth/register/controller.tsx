@@ -13,7 +13,8 @@ export default createController(routes.auth.register, {
   actions: {
     index(context) {
       if (context.viewer) return redirect(routes.home.href(), 303)
-      return context.render(<RegisterPage shell={getShell(context)} />)
+      let step = context.url.searchParams.get('cara') === 'email' ? ('email' as const) : ('methods' as const)
+      return context.render(<RegisterPage shell={getShell(context)} step={step} />)
     },
 
     async action(context) {
@@ -34,7 +35,7 @@ export default createController(routes.auth.register, {
         if (emailTaken) errors.email = 'Email sudah terdaftar. Silakan masuk.'
       }
       let renderError = () =>
-        context.render(<RegisterPage shell={getShell(context)} values={values} errors={errors} />, { status: 400 })
+        context.render(<RegisterPage shell={getShell(context)} step="email" values={values} errors={errors} />, { status: 400 })
       if (!result.ok || Object.keys(errors).length > 0) return renderError()
 
       let { username, email, password } = result.value

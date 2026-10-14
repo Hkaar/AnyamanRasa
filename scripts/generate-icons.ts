@@ -14,7 +14,7 @@ const names = [
   'locate-fixed', 'refrigerator', 'info', 'eye', 'eye-off', 'image-plus', 'grip-vertical', 'pencil',
   'equal', 'download', 'layout-grid', 'flag', 'ellipsis', 'file', 'archive', 'waypoints', 'zoom-in',
   'zoom-out', 'map-pin', 'calendar', 'copy', 'archive-restore', 'shield',
-  'sparkle', 'shield-check', 'bookmark-check', 'log-in', 'qr-code',
+  'sparkle', 'shield-check', 'bookmark-check', 'log-in', 'qr-code', 'mail',
 ]
 
 const pascal = (name: string) =>
