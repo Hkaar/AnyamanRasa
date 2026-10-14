@@ -42,7 +42,8 @@ Demo accounts (password `rahasia123`, after `npm run auth:demo-users`):
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Development server with CSS watch |
+| `npm run dev` | Development server with hot reloading (server code and components) and CSS watch, on `PORT` (44100); the app itself runs on `PORT + 2` behind it |
+| `npm run dev:node` | Fallback: plain `node --watch` server (restarts only when `server.ts` changes) |
 | `npm run build` | Build the production stylesheet (`public/styles.css`) |
 | `npm start` | Production server |
 | `npm test` | Unit + router tests. The `_test` database is rebuilt automatically; override it with `TEST_DATABASE_URL` |

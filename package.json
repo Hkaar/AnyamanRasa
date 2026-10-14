@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npm run css && (npm run css:watch & NODE_ENV=development node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts)",
+    "dev": "npm run css && (npm run css:watch & NODE_ENV=development node --env-file-if-exists=.env hmr.ts)",
+    "dev:node": "npm run css && (npm run css:watch & NODE_ENV=development node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts)",
     "hmr": "NODE_ENV=development node --env-file-if-exists=.env hmr.ts",
     "start": "NODE_ENV=production node --env-file-if-exists=.env --import remix/node-tsx server.ts",
     "build": "npm run css",
