@@ -1,0 +1,104 @@
+@import 'tailwindcss' source(none);
+@source '../../app';
+
+/* Design tokens from the pen.dev design system (frame "Design System").
+   Components are shadcn/ui-style Remix components in app/ui/ that use these tokens
+   through Tailwind classes; this file only holds tokens and base element styles. */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-bg: #ffffff;
+  --color-subtle: #faf6f1;
+  --color-hover: #f4ece3;
+  --color-ink: #2a1f1a;
+  --color-muted: #76655b;
+  --color-faint: #a09186;
+  --color-line: #ece3da;
+  --color-line-strong: #c9b8a8;
+  /* Outlined controls (Button/Secondary, tags, chips). */
+  --color-outline: #9e8e82;
+  --color-accent: #d2693f;
+  --color-accent-strong: #a8491f;
+  --color-accent-subtle: #fbede5;
+  /* Dark brown surfaces: Button/Accent, footer, selected chips, featured cards. */
+  --color-surface-dark: #3e2f28;
+  --color-surface-dark-line: #5a4840;
+  --color-error: #b42318;
+  --color-error-subtle: #fef3f2;
+  --color-warning: #8a6a2e;
+  --color-warning-subtle: #f8f0e1;
+  --color-toast-icon: #efa27e;
+  /* Pastels used by promo cards, gradients and the footer text. */
+  --color-peach: #f2c9a0;
+  --color-coral: #e8916a;
+  --color-sand: #d7b89a;
+  --color-mist: #f2f3f4;
+
+  --font-sans: 'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+  /* pen.dev sizes text with the font's own line height unless a lineHeight is set;
+     elements with an explicit design line height use leading-* classes. */
+  --text-xs--line-height: normal;
+  --text-sm--line-height: normal;
+  --text-base--line-height: normal;
+  --text-lg--line-height: normal;
+  --text-xl--line-height: normal;
+  --text-2xl--line-height: normal;
+  --text-3xl--line-height: normal;
+  --text-4xl--line-height: normal;
+
+  --radius-*: initial;
+  /* pen.dev radius-sm/md/lg = 10/14/20. */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --shadow-*: initial;
+  --shadow-modal: 0 8px 24px #2a1f1a14;
+
+  /* Ticker under the home hero: the content is rendered twice, so moving the
+     track by half its width loops seamlessly. Pure CSS so it runs without JS. */
+  --animate-marquee: marquee 40s linear infinite;
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    line-height: normal;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

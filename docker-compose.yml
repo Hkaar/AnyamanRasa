@@ -1,0 +1,20 @@
+# Development services. Production uses docker-compose.prod.yml.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: anyaman
+      POSTGRES_PASSWORD: anyaman
+      POSTGRES_DB: anyaman_rasa
+    ports:
+      - '5433:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U anyaman -d anyaman_rasa']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  db-data:

@@ -1,0 +1,15 @@
+drop table if exists node_relations;
+drop table if exists recipe_categories;
+drop table if exists categories;
+drop table if exists recipe_ingredients;
+drop table if exists ingredients;
+drop table if exists recipes;
+drop table if exists user_roles;
+drop table if exists roles;
+drop table if exists users;
+drop function if exists node_relations_cleanup();
+drop function if exists node_relations_endpoint_exists();
+drop type if exists relation_type;
+drop type if exists node_type;
+drop type if exists recipe_status;
+drop type if exists recipe_difficulty;

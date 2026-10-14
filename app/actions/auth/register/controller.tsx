@@ -1,0 +1,71 @@
+import { redirect } from 'remix/response/redirect'
+import { createController } from 'remix/router'
+
+import { authErrorMessage, getAuthProvider } from '../../../data/auth-provider.ts'
+import { createUser, isEmailTaken, isUsernameTaken } from '../../../data/users.ts'
+import { text, validateRegistration } from '../../../domain/validation.ts'
+import { routes } from '../../../routes.ts'
+import { getShell, setFlash } from '../../shell.tsx'
+import { CheckEmailPage, RegisterPage } from '../pages.tsx'
+import { publicUrl, signIn } from '../sign-in.ts'
+
+export default createController(routes.auth.register, {
+  actions: {
+    index(context) {
+      if (context.viewer) return redirect(routes.home.href(), 303)
+      return context.render(<RegisterPage shell={getShell(context)} />)
+    },
+
+    async action(context) {
+      let result = validateRegistration(context.formData)
+      let values = {
+        username: text(context.formData.get('username')).toLowerCase(),
+        email: text(context.formData.get('email')).toLowerCase(),
+      }
+      let errors: { username?: string; email?: string; password?: string; confirm?: string; form?: string } =
+        result.ok ? {} : { ...result.errors }
+
+      if (result.ok) {
+        let [usernameTaken, emailTaken] = await Promise.all([
+          isUsernameTaken(context.db, result.value.username),
+          isEmailTaken(context.db, result.value.email),
+        ])
+        if (usernameTaken) errors.username = 'Nama pengguna sudah dipakai.'
+        if (emailTaken) errors.email = 'Email sudah terdaftar. Silakan masuk.'
+      }
+      let renderError = () =>
+        context.render(<RegisterPage shell={getShell(context)} values={values} errors={errors} />, { status: 400 })
+      if (!result.ok || Object.keys(errors).length > 0) return renderError()
+
+      let { username, email, password } = result.value
+      let signUp = await getAuthProvider().signUp(email, password, {
+        username,
+        emailRedirectTo: publicUrl(context, `${routes.auth.login.index.href()}?terkonfirmasi=1`),
+      })
+      if (!signUp.ok) {
+        if (signUp.error === 'email-taken') errors.email = authErrorMessage('email-taken')
+        else if (signUp.error === 'weak-password') errors.password = authErrorMessage('weak-password')
+        else errors.form = authErrorMessage(signUp.error)
+        return renderError()
+      }
+
+      // Display name defaults to the username; it can be changed in profile settings.
+      let viewer = await createUser(context.db, {
+        authUserId: signUp.value.identity.id,
+        name: username,
+        username,
+        email,
+      })
+
+      if (signUp.value.needsConfirmation) {
+        return context.render(<CheckEmailPage shell={getShell(context)} email={email} />)
+      }
+      signIn(context, viewer.id)
+      setFlash(context, {
+        message: 'Akun berhasil dibuat. Lengkapi profilmu kapan saja.',
+        action: { label: 'Atur profil', href: routes.profile.edit.index.href() },
+      })
+      return redirect(routes.home.href(), 303)
+    },
+  },
+})

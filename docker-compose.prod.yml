@@ -1,0 +1,41 @@
+# Production stack. Secrets come from the environment at runtime (SKPL-NF-03.2):
+#   POSTGRES_PASSWORD=… SESSION_SECRETS=… SUPABASE_URL=… SUPABASE_ANON_KEY=… PUBLIC_URL=… \
+#     docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml run --rm app npx remix db migrate
+# Serve behind an HTTPS-terminating reverse proxy.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: anyaman
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: anyaman_rasa
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U anyaman -d anyaman_rasa']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://anyaman:${POSTGRES_PASSWORD}@db:5432/anyaman_rasa
+      SESSION_SECRETS: ${SESSION_SECRETS:?set SESSION_SECRETS}
+      SUPABASE_URL: ${SUPABASE_URL:?set SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:?set SUPABASE_ANON_KEY}
+      PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL}
+    ports:
+      - '${APP_PORT:-44100}:44100'
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  db-data:
+  uploads:

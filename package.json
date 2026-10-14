@@ -1,0 +1,41 @@
+{
+  "name": "anyaman-rasa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run css && (npm run css:watch & NODE_ENV=development node --env-file-if-exists=.env --watch --import remix/node-tsx server.ts)",
+    "hmr": "NODE_ENV=development node --env-file-if-exists=.env hmr.ts",
+    "start": "NODE_ENV=production node --env-file-if-exists=.env --import remix/node-tsx server.ts",
+    "build": "npm run css",
+    "css": "tailwindcss -i app/styles/app.css -o public/styles.css --minify",
+    "css:watch": "tailwindcss -i app/styles/app.css -o public/styles.css --watch=always",
+    "db:status": "node --env-file-if-exists=.env node_modules/.bin/remix db status",
+    "db:migrate": "node --env-file-if-exists=.env node_modules/.bin/remix db migrate",
+    "db:seed": "node --env-file-if-exists=.env node_modules/.bin/remix db seed",
+    "db:reset": "node --env-file-if-exists=.env node_modules/.bin/remix db reset --force",
+    "test": "NODE_ENV=test DATABASE_URL=${TEST_DATABASE_URL:-postgres://anyaman:anyaman@localhost:5433/anyaman_rasa_test} remix test",
+    "typecheck": "tsc --noEmit",
+    "auth:demo-users": "node --env-file-if-exists=.env --import remix/node-tsx scripts/create-demo-users.ts"
+  },
+  "engines": {
+    "node": ">=24.3.0"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cytoscape": "^3.34.3",
+    "motion": "^14.1.0",
+    "pg": "^8.23.1",
+    "remix": "^3.0.0",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/cytoscape": "^3.21.9",
+    "@types/node": "latest",
+    "@types/pg": "^8.23.1",
+    "lucide": "^1.55.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "latest"
+  }
+}

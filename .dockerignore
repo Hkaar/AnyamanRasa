@@ -1,0 +1,11 @@
+node_modules
+tmp
+uploads
+.env
+.env.*
+!.env.example
+public/styles.css
+*.log
+.agents
+.claude
+.commandcode
