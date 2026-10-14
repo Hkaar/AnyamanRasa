@@ -22,7 +22,7 @@ Core features:
 - Database: PostgreSQL
 - Graph visualization: Cytoscape.js
 - Runtime: Node.js
-- Deployment: Docker
+- Deployment: Docker (self-hosted) or Vercel + Supabase (see README)
 
 Do not introduce React, Next.js, Laravel, Vue, or Inertia. (The SKPL's Laravel/Vue baseline is superseded by this stack.)
 

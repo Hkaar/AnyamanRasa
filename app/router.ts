@@ -28,7 +28,7 @@ import { MAX_UPLOAD_BYTES } from './data/media.ts'
 
 const middleware = createMiddleware(
   staticFiles('./public', { index: false }),
-  formData({ maxFiles: 1, maxFileSize: MAX_UPLOAD_BYTES, maxTotalSize: MAX_UPLOAD_BYTES + 1024 * 1024 }),
+  formData({ maxFiles: 1, maxFileSize: MAX_UPLOAD_BYTES, maxTotalSize: MAX_UPLOAD_BYTES + 256 * 1024 }),
   sessionMiddleware(),
   csrf(),
   loadDatabase(),

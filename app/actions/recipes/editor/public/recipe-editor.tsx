@@ -476,7 +476,7 @@ export const RecipeEditor = clientEntry(
                       {photoPreview ? 'Ganti foto: ' : 'Tarik foto ke sini atau '}
                       <span class="font-medium text-ink">pilih file</span>
                     </span>
-                    <span class="text-xs text-faint">JPG, PNG, atau WebP, maks. 5 MB · Rasio 4:3 disarankan</span>
+                    <span class="text-xs text-faint">JPG, PNG, atau WebP, maks. 4 MB · Rasio 4:3 disarankan</span>
                     <input
                       id="foto"
                       name="foto"

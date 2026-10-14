@@ -2,7 +2,7 @@
 
 AnyamanRasa is a recipe discovery platform. It connects recipes through ingredients, substitutions, pairings and variations with explicit lineage. Its main features are Pantry Search ("Cari dari Bahan") and an interactive Recipe Graph.
 
-It's built with Remix 3 (`remix/component`), TypeScript, Tailwind CSS v4, Motion, PostgreSQL and Cytoscape.js, and deploys with Docker.
+It's built with Remix 3 (`remix/component`), TypeScript, Tailwind CSS v4, Motion, PostgreSQL and Cytoscape.js, and deploys either self-hosted with Docker or to Vercel with Supabase.
 
 ## Getting started
 
@@ -51,7 +51,22 @@ Demo accounts (password `rahasia123`, after `npm run auth:demo-users`):
 | `npm run db:migrate`, `db:status`, `db:seed`, `db:reset` | Database lifecycle (see `docs/database.md`) |
 | `npx remix doctor` | Check project conventions |
 
-## Production (Docker)
+## Deployment
+
+The same code runs in two setups. Supabase Auth is used by both; the database and photo
+storage can each be self-hosted or hosted.
+
+| | Self-hosted (Docker) | Vercel + Supabase |
+| --- | --- | --- |
+| Server | `server.ts` (long-running Node) | `api/index.mjs` (Vercel Function, `vercel.json`) |
+| Database | bundled Postgres, or `EXTERNAL_DATABASE_URL` | Supabase Postgres via the pooler |
+| Photos | `MEDIA_STORAGE=local` (the `uploads` volume) or `s3` | `MEDIA_STORAGE=s3` (Supabase Storage) |
+
+Photo URLs are always stored as `/media/<file>`, so switching storage only means copying the
+files (`npm run media:copy`), never rewriting the database. Uploads are limited to 4 MB, below
+Vercel's request-body cap.
+
+### Self-hosted (Docker)
 
 ```sh
 export POSTGRES_PASSWORD=… SESSION_SECRETS=$(openssl rand -hex 32) \
@@ -61,6 +76,42 @@ docker compose -f docker-compose.prod.yml run --rm app npx remix db migrate
 ```
 
 Put the app behind an HTTPS-terminating proxy. Secrets are passed at runtime and never baked into the image.
+To use a hosted database instead of the bundled one, set `EXTERNAL_DATABASE_URL` and start only the app
+(`up -d --build --no-deps app`). To keep photos in a bucket, set the `MEDIA_STORAGE=s3` variables below.
+
+### Vercel + Supabase
+
+1. **Supabase**
+   - Database: copy the *Transaction pooler* connection string (port 6543) for the app, and the
+     direct one (port 5432) for migrations.
+   - Storage: create a bucket (e.g. `media`). Make it public to serve photos straight from
+     Supabase's CDN, or keep it private and let the app stream them. Under
+     *Storage → S3 Connection*, create an access key and note the endpoint and region.
+   - Auth: add `https://<your-domain>/masuk/google/callback` to the redirect URLs.
+2. **Migrate** from your machine: `DATABASE_URL=<direct URL> npm run db:migrate`
+   (and `npm run db:seed` for demo data).
+3. **Vercel**: import the repository (framework preset: *Other*; `vercel.json` sets the build).
+   Set these environment variables:
+
+   ```
+   DATABASE_URL=<pooler URL, port 6543>
+   SESSION_SECRETS=<openssl rand -hex 32>
+   SUPABASE_URL=https://<ref>.supabase.co
+   SUPABASE_ANON_KEY=…
+   PUBLIC_URL=https://<your-domain>
+   MEDIA_STORAGE=s3
+   S3_ENDPOINT=https://<ref>.storage.supabase.co/storage/v1/s3
+   S3_REGION=<project region>
+   S3_BUCKET=media
+   S3_ACCESS_KEY_ID=…
+   S3_SECRET_ACCESS_KEY=…
+   MEDIA_PUBLIC_URL=https://<ref>.supabase.co/storage/v1/object/public/media   # public bucket only
+   ```
+
+4. Moving existing photos from a Docker volume: run `npm run media:copy -- <uploads dir>` with the
+   `MEDIA_STORAGE=s3` variables set.
+
+The function compiles the browser scripts on a cold start (about 2 s); warm requests are fast.
 
 ## Documentation
 

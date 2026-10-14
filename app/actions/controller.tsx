@@ -1,11 +1,9 @@
-import { createFileResponse } from 'remix/response/file'
-import { openLazyFile } from 'remix/fs'
 import { createController } from 'remix/router'
 
 import { assets } from '../assets.ts'
 import { loadNeighborhood, mostConnectedRecipeKey } from '../data/graph.ts'
 import { findIngredientsByNames } from '../data/ingredients.ts'
-import { resolveMediaFile } from '../data/media.ts'
+import { serveMedia } from '../data/media.ts'
 import { findPantryMatches } from '../data/pantry.ts'
 import { type HomeTab, getSiteStats, listHomeRecipes } from '../data/recipes.ts'
 import { DEFAULT_EDGE_KINDS } from '../domain/graph.ts'
@@ -24,17 +22,8 @@ export default createController(routes, {
       return (await assets.fetch(context.request)) ?? new Response('Not Found', { status: 404 })
     },
 
-    async media(context) {
-      let media = resolveMediaFile(context.params.file)
-      if (!media) return new Response('Not Found', { status: 404 })
-      try {
-        let file = openLazyFile(media.filePath, { type: media.contentType })
-        return await createFileResponse(file, context.request, {
-          cacheControl: 'public, max-age=31536000, immutable',
-        })
-      } catch {
-        return new Response('Not Found', { status: 404 })
-      }
+    media(context) {
+      return serveMedia(context.params.file, context.request)
     },
 
     async home(context) {

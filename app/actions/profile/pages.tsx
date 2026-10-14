@@ -245,7 +245,7 @@ export function ProfileEditPage(
             novalidate
           >
             <CsrfField token={shell.csrfToken} />
-            <Field id="avatar" label="Foto profil" error={errors.avatar} help="JPG, PNG, atau WebP, maks. 5 MB.">
+            <Field id="avatar" label="Foto profil" error={errors.avatar} help="JPG, PNG, atau WebP, maks. 4 MB.">
               <div class="flex items-center gap-4">
                 <Avatar name={profile.name} src={profile.avatarUrl} size={64} />
                 <input

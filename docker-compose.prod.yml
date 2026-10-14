@@ -2,6 +2,9 @@
 #   POSTGRES_PASSWORD=… SESSION_SECRETS=… SUPABASE_URL=… SUPABASE_ANON_KEY=… PUBLIC_URL=… \
 #     docker compose -f docker-compose.prod.yml up -d --build
 #   docker compose -f docker-compose.prod.yml run --rm app npx remix db migrate
+# Hosted database instead of the bundled one (e.g. Supabase): set EXTERNAL_DATABASE_URL and start
+# only the app with `up -d --build --no-deps app`. Photos default to the `uploads` volume;
+# set MEDIA_STORAGE=s3 and the S3_* variables to keep them in a bucket (see README).
 # Serve behind an HTTPS-terminating reverse proxy.
 services:
   db:
@@ -9,7 +12,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: anyaman
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      # Required when this bundled database is used; Postgres refuses to start without it.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_DB: anyaman_rasa
     volumes:
       - db-data:/var/lib/postgresql/data
@@ -26,11 +30,18 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://anyaman:${POSTGRES_PASSWORD}@db:5432/anyaman_rasa
+      DATABASE_URL: ${EXTERNAL_DATABASE_URL:-postgres://anyaman:${POSTGRES_PASSWORD:-}@db:5432/anyaman_rasa}
       SESSION_SECRETS: ${SESSION_SECRETS:?set SESSION_SECRETS}
       SUPABASE_URL: ${SUPABASE_URL:?set SUPABASE_URL}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:?set SUPABASE_ANON_KEY}
       PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL}
+      MEDIA_STORAGE: ${MEDIA_STORAGE:-local}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-}
     ports:
       - '${APP_PORT:-44100}:44100'
     volumes:

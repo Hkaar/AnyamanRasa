@@ -33,7 +33,7 @@ Rules:
 ## Request pipeline (`app/router.ts`)
 
 1. `staticFiles('./public')`: compiled CSS, logo, favicon.
-2. `formData()`: one upload at most, 5 MB.
+2. `formData()`: one upload at most, 4 MB (below Vercel's request-body cap).
 3. `session()`: signed cookie session that stores only the user id, the CSRF token and an in-flight OAuth verifier.
 4. `csrf()`: synchronizer token (`_csrf`) plus origin checks on every unsafe request.
 5. `loadDatabase()`: exposes `context.db`.
@@ -49,7 +49,7 @@ Rules:
 - **Pantry Search.** `domain/pantry.ts` matches only through `recipe_ingredients`. The basic staples named in the UI (garam, minyak goreng, bawang merah) can be assumed available and are then left out of the counts. Ranking is by match ratio, then matched count, then fewest missing, then title. Substitutions come only from `substitute_for` relations.
 - **Recipe Graph.** `data/graph.ts` expands from the centre one edge query per depth level (at most 2), plus one extra hop for substitutes of boundary ingredients. `domain/graph.ts` then selects at most 30 nodes, keeping higher-priority relationships first (NF-02.1). The browser renders the result with Cytoscape.js (`actions/graph/public/graph-explorer.tsx`). The **Daftar** view lists the same relationships as an accessible alternative (F-03.4). State lives in the URL (`?simpul=recipe:<id>&kedalaman=1&relasi=…&tampilan=daftar`).
 - **Variations.** A variation is a new recipe plus a `variation_of` row, both written in one transaction. The ingredient changes shown on pages are computed by `domain/lineage.ts` and never typed in by hand.
-- **Uploads.** Files are checked by magic bytes (JPEG, PNG or WebP), stored under a generated UUID name in `UPLOAD_DIR`, and served by `/media/*` with strict name validation.
+- **Uploads.** Files are checked by magic bytes (JPEG, PNG or WebP) and saved under a generated UUID name through a `MediaStore` (`app/data/media.ts`): `MEDIA_STORAGE=local` writes to `UPLOAD_DIR`, `MEDIA_STORAGE=s3` writes to an S3-compatible bucket such as Supabase Storage via `remix/file-storage/s3`. The database always stores `/media/<name>`; `/media/*` validates the name, then streams the file or redirects to `MEDIA_PUBLIC_URL` for a public bucket.
 
 ## Authentication (Supabase Auth)
 
