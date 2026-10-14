@@ -2,7 +2,7 @@ import { csrf } from 'remix/middleware/csrf'
 import { formData } from 'remix/middleware/form-data'
 import { render } from 'remix/middleware/render'
 import { staticFiles } from 'remix/middleware/static'
-import { createMiddleware, createRouter, type MiddlewareContext } from 'remix/router'
+import { createMiddleware, createRouter, type Middleware, type MiddlewareContext } from 'remix/router'
 
 import adminController from './actions/admin/controller.tsx'
 import adminRecipesController from './actions/admin/recipes/controller.tsx'
@@ -24,10 +24,29 @@ import { loadDatabase } from './middleware/database.ts'
 import { sessionMiddleware } from './middleware/session.ts'
 import { loadViewer } from './middleware/viewer.ts'
 import { routes } from './routes.ts'
-import { MAX_UPLOAD_BYTES } from './data/media.ts'
+import { MAX_UPLOAD_BYTES, serveMedia } from './data/media.ts'
+
+/**
+ * Compiled scripts and uploaded photos need no session, CSRF check or signed-in user, so
+ * they are answered before that work. Otherwise every script module a page loads would
+ * look up the viewer in the database (dozens of queries per page view).
+ */
+function publicAssets(): Middleware {
+  return async (context, next) => {
+    let method = context.request.method
+    if (method !== 'GET' && method !== 'HEAD') return next()
+    let { pathname } = context.url
+    if (pathname.startsWith('/assets/')) {
+      return (await assets.fetch(context.request)) ?? new Response('Not Found', { status: 404 })
+    }
+    if (pathname.startsWith('/media/')) return serveMedia(pathname.slice('/media/'.length), context.request)
+    return next()
+  }
+}
 
 const middleware = createMiddleware(
   staticFiles('./public', { index: false }),
+  publicAssets(),
   formData({ maxFiles: 1, maxFileSize: MAX_UPLOAD_BYTES, maxTotalSize: MAX_UPLOAD_BYTES + 256 * 1024 }),
   sessionMiddleware(),
   csrf(),
