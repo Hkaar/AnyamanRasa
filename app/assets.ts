@@ -17,6 +17,9 @@ export const assets = createAssetServer({
   denyFiles: ['app/**/*.test.*'],
   sourceMaps: isDevelopment ? 'external' : undefined,
   minify: !isDevelopment,
+  // Production URLs carry a content hash, so `npm run build` can write them to public/assets
+  // (scripts/build-assets.ts) and every host can cache them forever.
+  fingerprint: !isDevelopment,
   watch: isDevelopment,
   hmr: isHmr
     ? {
@@ -31,6 +34,6 @@ export const assets = createAssetServer({
   },
 })
 
-const entry = 'app/actions/public/entry.ts'
+export const SCRIPT_ENTRY_FILE = 'app/actions/public/entry.ts'
 
-export const scriptEntry = await assets.getScriptEntry(entry)
+export const scriptEntry = await assets.getScriptEntry(SCRIPT_ENTRY_FILE)

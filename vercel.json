@@ -11,5 +11,21 @@
       "excludeFiles": "{app/**/*.test.ts,app/**/*.test.tsx,node_modules/typescript/**,node_modules/@tailwindcss/**,node_modules/tailwindcss/**,node_modules/lucide/**,node_modules/@types/**,node_modules/.cache/**}"
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, s-maxage=31536000, immutable"
+        }
+      ]
+    }
+  ]
 }

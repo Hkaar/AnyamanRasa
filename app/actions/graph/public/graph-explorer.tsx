@@ -119,6 +119,7 @@ export const GraphExplorer = clientEntry(
     let searchQuery = ''
     let searchResults: { key: NodeKey; type: string; name: string }[] = []
     let searchController: AbortController | null = null
+    let searchTimer: ReturnType<typeof setTimeout> | undefined
     let canvasId = `${handle.id}-canvas`
     let panelId = `${handle.id}-panel`
 
@@ -399,14 +400,22 @@ export const GraphExplorer = clientEntry(
       else cy.animate({ zoom: target }, { duration: 200, easing: 'ease-out-cubic' })
     }
 
-    async function search(value: string) {
+    // Waits for a pause in typing: an aborted fetch still runs its query on the server.
+    // The input is controlled, so every keystroke still re-renders to keep the typed value.
+    function search(value: string) {
       searchQuery = value
+      clearTimeout(searchTimer)
       searchController?.abort()
       if (!value.trim()) {
         searchResults = []
         handle.update()
         return
       }
+      searchTimer = setTimeout(() => fetchSearchResults(value), 200)
+      handle.update()
+    }
+
+    async function fetchSearchResults(value: string) {
       searchController = new AbortController()
       try {
         let response = await fetch(`${routes.graph.search.href()}?q=${encodeURIComponent(value)}`, {

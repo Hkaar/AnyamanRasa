@@ -41,9 +41,13 @@ export const IngredientCombobox = clientEntry(
     let open = false
     let active = -1
     let controller: AbortController | null = null
+    let timer: ReturnType<typeof setTimeout> | undefined
     let listId = `${handle.id}-list`
 
-    async function search(value: string) {
+    // Waits for a pause in typing: an aborted fetch still runs its query on the server.
+    // The input is controlled, so every keystroke still re-renders to keep the typed value.
+    function search(value: string) {
+      clearTimeout(timer)
       controller?.abort()
       query = value
       if (value.trim().length === 0) {
@@ -52,6 +56,11 @@ export const IngredientCombobox = clientEntry(
         handle.update()
         return
       }
+      timer = setTimeout(() => fetchSuggestions(value), 200)
+      handle.update()
+    }
+
+    async function fetchSuggestions(value: string) {
       controller = new AbortController()
       try {
         let response = await fetch(`${handle.props.searchUrl}?q=${encodeURIComponent(value)}`, {

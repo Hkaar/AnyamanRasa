@@ -2,6 +2,7 @@ import * as assert from 'remix/assert'
 import { describe, it } from 'remix/test'
 
 import { createClient } from '../../test/client.ts'
+import { scriptEntry } from '../assets.ts'
 import { db } from '../db.ts'
 
 describe('root controller', () => {
@@ -32,11 +33,28 @@ describe('root controller', () => {
       return exec(...args)
     }) as typeof db.exec
     try {
-      let response = await client.get('/assets/app/actions/public/entry.ts')
+      let response = await client.get(scriptEntry.href)
       assert.equal(response.status, 200)
       assert.equal(queries, 0)
     } finally {
       db.exec = exec
+    }
+  })
+
+  it('shows a retryable error page when the database is unavailable', async () => {
+    let exec = db.exec.bind(db)
+    db.exec = (() =>
+      Promise.reject(Object.assign(new Error('Database execution failed'), { code: 'DATA_TABLE_DATABASE_ERROR' }))) as typeof db.exec
+    let log = console.error
+    console.error = () => {}
+    try {
+      let response = await createClient().get('/')
+      assert.equal(response.status, 503)
+      assert.equal(response.headers.get('Retry-After'), '30')
+      assert.match(await response.text(), /Server sedang sibuk/)
+    } finally {
+      db.exec = exec
+      console.error = log
     }
   })
 

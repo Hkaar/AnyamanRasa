@@ -111,7 +111,12 @@ To use a hosted database instead of the bundled one, set `EXTERNAL_DATABASE_URL`
 4. Moving existing photos from a Docker volume: run `npm run media:copy -- <uploads dir>` with the
    `MEDIA_STORAGE=s3` variables set.
 
-The function compiles the browser scripts on a cold start (about 2 s); warm requests are fast.
+`npm run build` precompiles the browser modules into `public/assets/`, so Vercel's CDN serves
+them without running the function; the app's own TypeScript modules are served by the function
+once and then cached by the CDN. Script and photo requests never touch the database. On Vercel
+each instance keeps at most 3 database connections and releases them before it is frozen
+(`attachDatabasePool`), so a busy site stays well under Supabase's pooler limit. If the database
+is unreachable, visitors get a short "coba lagi" page (HTTP 503) instead of a crash.
 
 ## Documentation
 
