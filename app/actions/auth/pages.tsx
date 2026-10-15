@@ -209,10 +209,15 @@ function Activity(
   }
 }
 
-/** Google sign-in: a separate POST form (CSRF-protected) that starts the Supabase OAuth flow. */
+/**
+ * Google sign-in: a separate POST form (CSRF-protected) that starts the Supabase OAuth flow.
+ * `data-rmx-document` makes it a full-page submit: client-side navigation fetches forms, and a
+ * fetch cannot follow the redirect to Supabase/Google on another origin (it fell back to a GET
+ * of this POST-only route, "Method Not Allowed").
+ */
 function GoogleButton(handle: Handle<{ shell: Shell; label: string; redirectTo?: string }>) {
   return () => (
-    <form method="post" action={routes.auth.google.href()}>
+    <form method="post" action={routes.auth.google.href()} data-rmx-document>
       <CsrfField token={handle.props.shell.csrfToken} />
       {handle.props.redirectTo && <input type="hidden" name="ke" value={handle.props.redirectTo} />}
       <Button type="submit" variant="outline" class="h-12 w-full gap-3 text-[15px]">

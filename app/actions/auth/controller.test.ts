@@ -94,6 +94,13 @@ describe('authentication', () => {
 })
 
 describe('google sign-in', () => {
+  it('submits the Google form as a full page load so the browser can follow the redirect off-site', async () => {
+    for (let page of ['/masuk', '/daftar']) {
+      let html = await (await createClient().get(page)).text()
+      assert.match(html, /<form[^>]*action="\/masuk\/google"[^>]*data-rmx-document/)
+    }
+  })
+
   async function startGoogle(client: ReturnType<typeof createClient>, ke = '/cari-bahan') {
     let start = await client.post('/masuk/google', { ke })
     assert.equal(start.status, 303)

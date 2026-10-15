@@ -159,7 +159,10 @@ export function createSupabaseAuthProvider(options: {
     exchangeCode(code, codeVerifier) {
       return guarded(async () => {
         let { status, json } = await call('/token?grant_type=pkce', { auth_code: code, code_verifier: codeVerifier })
-        if (status !== 200 || !json.user) return { ok: false, error: 'oauth-failed' }
+        if (status !== 200 || !json.user) {
+          console.warn('Supabase PKCE code exchange failed', { status, error: json.error_code ?? json.error, message: json.msg ?? json.error_description })
+          return { ok: false, error: 'oauth-failed' }
+        }
         return { ok: true, value: toIdentity(json.user as SupabaseUser) }
       })
     },

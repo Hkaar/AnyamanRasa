@@ -44,6 +44,16 @@ export default createController(routes.auth, {
       let code = context.url.searchParams.get('code')
       // No verifier means this browser did not start the flow: refuse (login CSRF).
       if (!code || typeof verifier !== 'string') {
+        // Supabase reports provider/config problems as ?error=&error_description= (also in the hash,
+        // which never reaches the server). Log them so deployments can be diagnosed.
+        let params = context.url.searchParams
+        console.warn('Google sign-in callback rejected', {
+          hasCode: Boolean(code),
+          hasVerifier: typeof verifier === 'string',
+          error: params.get('error'),
+          errorCode: params.get('error_code'),
+          errorDescription: params.get('error_description'),
+        })
         return redirect(loginWithError('oauth-failed'), 303)
       }
       let result = await getAuthProvider().exchangeCode(code, verifier)
