@@ -592,7 +592,8 @@ export const GraphExplorer = clientEntry(
                 class="absolute inset-0 bg-radial from-transparent from-25% to-subtle/90 to-75% lg:to-hover/90"
               />
               <canvas id={underlayId} aria-hidden="true" class="pointer-events-none absolute inset-0 size-full" />
-              <div class="absolute inset-0">
+              {/* The wheel zooms the graph, so Lenis must not turn it into page scrolling. */}
+              <div class="absolute inset-0" data-lenis-prevent>
                 <div
                   class="size-full"
                   aria-label={`Graf hubungan ${center?.name ?? ''}. Gunakan tampilan Daftar untuk navigasi dengan keyboard.`}

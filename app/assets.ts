@@ -13,7 +13,7 @@ export const assets = createAssetServer({
   // Browser-reachable source. app/data, app/middleware and app/db.ts are server-only
   // and must never be listed here.
   allowFiles: ['app/routes.ts', 'app/**/public/**', 'app/ui/**', 'app/domain/**'],
-  allowPackages: ['remix', 'cytoscape', 'motion', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+  allowPackages: ['remix', 'cytoscape', 'motion', 'lenis', 'class-variance-authority', 'clsx', 'tailwind-merge'],
   denyFiles: ['app/**/*.test.*'],
   sourceMaps: isDevelopment ? 'external' : undefined,
   minify: !isDevelopment,

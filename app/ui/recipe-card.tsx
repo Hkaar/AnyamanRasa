@@ -63,7 +63,8 @@ export function RecipeCard(handle: Handle<RecipeCardProps>) {
               src={recipe.imageUrl}
               alt=""
               loading="lazy"
-              class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out motion-safe:group-hover:scale-[1.03]"
+              data-media
+              class="size-full object-cover motion-safe:transition-[scale] motion-safe:duration-700 motion-safe:ease-out-expo motion-safe:group-hover:scale-[1.04]"
             />
           ) : (
             <div class="flex size-full items-center justify-center text-faint">

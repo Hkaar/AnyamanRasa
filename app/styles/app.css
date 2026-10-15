@@ -1,4 +1,6 @@
 @import 'tailwindcss' source(none);
+/* Lenis smooth scrolling (app/actions/public/motion.ts). */
+@import 'lenis/dist/lenis.css';
 @source '../../app';
 
 /* Design tokens from the pen.dev design system (frame "Design System").
@@ -79,6 +81,12 @@
 
   --shadow-*: initial;
   --shadow-modal: 0 8px 24px #2a1f1a14;
+
+  /* Motion follows krepling.com: unhurried hovers on Krepling's own ease, and easeOutExpo
+     for movement (the same curves app/actions/public/motion.ts uses). */
+  --default-transition-duration: 250ms;
+  --default-transition-timing-function: cubic-bezier(0.25, 0.1, 0.35, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Ticker under the home hero: the content is rendered twice, so moving the
      track by half its width loops seamlessly. Pure CSS so it runs without JS. */
