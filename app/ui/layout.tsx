@@ -45,12 +45,14 @@ export interface SiteLayoutProps {
   active?: NavKey
   /** Hide the footer for app-like screens (graph, editor). */
   footer?: boolean
+  /** Edge-to-edge header for full-screen tools (graph): 24px side padding instead of the page column. */
+  fullWidth?: boolean
   children?: RemixNode
 }
 
 export function SiteLayout(handle: Handle<SiteLayoutProps>) {
   return () => {
-    let { shell, title, description, active = null, footer = true, children } = handle.props
+    let { shell, title, description, active = null, footer = true, fullWidth = false, children } = handle.props
     return (
       <Document title={title} description={description}>
         <a
@@ -59,7 +61,7 @@ export function SiteLayout(handle: Handle<SiteLayoutProps>) {
         >
           Langsung ke konten
         </a>
-        <SiteHeader shell={shell} active={active} />
+        <SiteHeader shell={shell} active={active} fullWidth={fullWidth} />
         <main id="konten" tabIndex={-1} class="outline-none">
           {children}
         </main>
@@ -70,9 +72,9 @@ export function SiteLayout(handle: Handle<SiteLayoutProps>) {
   }
 }
 
-function SiteHeader(handle: Handle<{ shell: Shell; active: NavKey }>) {
+function SiteHeader(handle: Handle<{ shell: Shell; active: NavKey; fullWidth: boolean }>) {
   return () => {
-    let { shell, active } = handle.props
+    let { shell, active, fullWidth } = handle.props
     let viewer = shell.viewer
     return (
       <header
@@ -87,7 +89,12 @@ function SiteHeader(handle: Handle<{ shell: Shell; active: NavKey }>) {
         data-blend={active === 'home' ? 'true' : undefined}
         data-at-top={active === 'home' ? 'true' : undefined}
       >
-        <div class={cn(pageX, 'flex h-[59px] items-center justify-between lg:h-[71px]')}>
+        <div
+          class={cn(
+            fullWidth ? 'w-full px-5 md:px-10 lg:px-6' : pageX,
+            'flex h-[59px] items-center justify-between lg:h-[71px]',
+          )}
+        >
           <div class="flex items-center gap-12">
             <Logo />
             <nav aria-label="Navigasi utama" class="hidden lg:block">

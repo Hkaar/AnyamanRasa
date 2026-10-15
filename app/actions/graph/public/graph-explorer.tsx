@@ -21,6 +21,7 @@ import { MetaItem } from '../../../ui/primitives.tsx'
 import { Select } from '../../../ui/select.tsx'
 import { Tooltip } from '../../../ui/tooltip.tsx'
 import { enter, prefersReducedMotion } from '../../public/motion.ts'
+import { startAtmosphere } from './graph-atmosphere.ts'
 import { type GraphParams, type GraphView, graphQuery } from './params.ts'
 import { Button, ButtonLink } from '../../../ui/button.tsx'
 import { badgeVariants } from '../../../ui/badge.tsx'
@@ -52,15 +53,19 @@ const COLOR = {
   peach: '#F2C9A0',
 }
 
+/** Line colour per relation (pen.dev Edges): each type also has its own line style in graphStyles(). */
 const EDGE_COLORS: Record<GraphEdgeKind, string> = {
-  similar_to: COLOR.faint,
-  variation_of: COLOR.muted,
+  similar_to: COLOR.accent,
+  variation_of: COLOR.accentStrong,
   uses: COLOR.lineStrong,
   substitute_for: COLOR.warning,
-  pairs_with: COLOR.faint,
+  pairs_with: COLOR.muted,
   inspired_by: COLOR.faint,
-  same_category: COLOR.line,
+  same_category: COLOR.faint,
 }
+
+/** How far each edge bows from a straight line; edges leading away from the centre all bend the same way. */
+const EDGE_BEND = 28
 
 const KIND_ICONS = {
   similar_to: 'git-compare-arrows',
@@ -121,6 +126,9 @@ export const GraphExplorer = clientEntry(
     let searchController: AbortController | null = null
     let searchTimer: ReturnType<typeof setTimeout> | undefined
     let canvasId = `${handle.id}-canvas`
+    let underlayId = `${handle.id}-underlay`
+    let overlayId = `${handle.id}-overlay`
+    let gridId = `${handle.id}-grid`
     let panelId = `${handle.id}-panel`
 
     function nodeByKey(key: NodeKey | null) {
@@ -174,11 +182,12 @@ export const GraphExplorer = clientEntry(
       let wasOpen = selected !== null
       selected = key
       cy?.nodes().removeClass('selected dimmed')
-      cy?.edges().removeClass('highlight')
+      cy?.edges().removeClass('highlight dimmed')
       if (key && cy) {
         let node = cy.getElementById(key)
         node.addClass('selected')
         node.connectedEdges().addClass('highlight')
+        cy.edges().difference(node.connectedEdges()).addClass('dimmed')
         // Graph Node/*/Dimmed: everything outside the selection's direct neighbourhood.
         cy.nodes().difference(node.closedNeighborhood()).addClass('dimmed')
       }
@@ -227,6 +236,8 @@ export const GraphExplorer = clientEntry(
             label: GRAPH_EDGE_LABELS[edge.kind],
             color: EDGE_COLORS[edge.kind],
             kind: edge.kind,
+            // Orient the bow by direction from the centre, so the graph swirls one way (the design's weave).
+            bend: (levels.get(edge.source) ?? 0) <= (levels.get(edge.target) ?? 0) ? EDGE_BEND : -EDGE_BEND,
           },
         })),
       ]
@@ -315,6 +326,12 @@ export const GraphExplorer = clientEntry(
         handle.update()
       })
       handle.update()
+
+      let underlay = document.getElementById(underlayId) as HTMLCanvasElement | null
+      let overlay = document.getElementById(overlayId) as HTMLCanvasElement | null
+      let grid = document.getElementById(gridId)
+      if (underlay && overlay && grid) startAtmosphere(cy, { underlay, overlay, grid }, signal)
+
       signal.addEventListener('abort', () => {
         cy?.destroy()
         cy = null
@@ -563,6 +580,18 @@ export const GraphExplorer = clientEntry(
           <div class="relative flex min-h-0 flex-1">
             {/* Canvas */}
             <div class={cn('relative min-w-0 flex-1 bg-subtle lg:bg-hover', view !== 'graf' && 'hidden')}>
+              {/* Backdrop (pen.dev Canvas → Backdrop): a dot grid that follows pan and zoom, faded toward
+                  the edges, then the glow/orbit underlay, Cytoscape, and the flowing-dot overlay. */}
+              <div
+                id={gridId}
+                aria-hidden="true"
+                class="absolute inset-0 bg-[radial-gradient(circle,rgb(201_184_168/0.7)_0.9px,transparent_1.3px)] bg-size-[24px_24px]"
+              />
+              <div
+                aria-hidden="true"
+                class="absolute inset-0 bg-radial from-transparent from-25% to-subtle/90 to-75% lg:to-hover/90"
+              />
+              <canvas id={underlayId} aria-hidden="true" class="pointer-events-none absolute inset-0 size-full" />
               <div class="absolute inset-0">
                 <div
                   class="size-full"
@@ -571,6 +600,7 @@ export const GraphExplorer = clientEntry(
                   id={canvasId}
                 />
               </div>
+              <canvas id={overlayId} aria-hidden="true" class="pointer-events-none absolute inset-0 size-full" />
 
               <fieldset class="absolute top-6 left-6 hidden w-[248px] rounded-lg bg-surface-dark p-5 text-white lg:block">
                 <legend class="sr-only">Filter hubungan</legend>
@@ -601,6 +631,7 @@ export const GraphExplorer = clientEntry(
                             />
                             <Icon name="check" size={12} strokeWidth={3} class="pointer-events-none absolute inset-0 m-auto hidden text-surface-dark peer-checked:block" />
                           </span>
+                          <EdgeSample kind={kind} muted={!checked} />
                           <span class={cn('flex-1', !checked && 'text-line-strong')}>{GRAPH_FILTER_LABELS[kind]}</span>
                           <span class="text-xs text-line-strong">{graph.kindCounts[kind]}</span>
                         </label>
@@ -910,6 +941,59 @@ function RelationList(handle: Handle<{ graph: GraphNeighborhood; onFocus: (key: 
   }
 }
 
+/**
+ * A sample of a relation's line for the filter legend, on a chip in the canvas colour so it reads
+ * exactly as on the graph (pen.dev Filter & Legend).
+ */
+function EdgeSample(handle: Handle<{ kind: GraphEdgeKind; muted: boolean }>) {
+  return () => {
+    let { kind, muted } = handle.props
+    let color = EDGE_COLORS[kind]
+    let line = (props: Record<string, string | number>) => (
+      <path d="M4 7 H24" fill="none" stroke={color} stroke-linecap="round" {...props} />
+    )
+    let sample: RemixNode
+    switch (kind) {
+      case 'similar_to':
+        sample = (
+          <>
+            <path d="M4 10 Q14 1 24 10" fill="none" stroke={color} stroke-width={5} stroke-opacity={0.18} stroke-linecap="round" />
+            <path d="M4 10 Q14 1 24 10" fill="none" stroke={color} stroke-width={2} stroke-linecap="round" />
+          </>
+        )
+        break
+      case 'variation_of':
+        sample = line({ 'stroke-width': 2.2, 'stroke-dasharray': '0.1 4' })
+        break
+      case 'substitute_for':
+        sample = line({ 'stroke-width': 1.6, 'stroke-dasharray': '4 3' })
+        break
+      case 'same_category':
+        sample = line({ 'stroke-width': 1.4, 'stroke-dasharray': '3 3' })
+        break
+      case 'pairs_with':
+        sample = (
+          <>
+            <path d="M4 5.5 H24" fill="none" stroke={color} stroke-width={1} />
+            <path d="M4 8.5 H24" fill="none" stroke={color} stroke-width={1} />
+          </>
+        )
+        break
+      default:
+        sample = line({ 'stroke-width': 1.4 })
+    }
+    return (
+      <svg
+        viewBox="0 0 28 14"
+        aria-hidden="true"
+        class={cn('h-3.5 w-7 shrink-0 rounded-[4px] bg-hover', muted && 'opacity-50')}
+      >
+        {sample}
+      </svg>
+    )
+  }
+}
+
 function toggleKind(kinds: GraphEdgeKind[], kind: GraphEdgeKind): GraphEdgeKind[] {
   let next = kinds.includes(kind) ? kinds.filter((k) => k !== kind) : [...kinds, kind]
   return next.length > 0 ? next : kinds
@@ -1004,7 +1088,9 @@ function graphStyles(): StylesheetJson {
       style: {
         width: 104,
         height: 104,
-        'border-color': COLOR.ink,
+        // Thick dark ring around the centre photo (pen.dev Node Nasi Goreng Kampung).
+        'border-width': 9,
+        'border-color': COLOR.surfaceDark,
         'border-opacity': 1,
         'font-size': 13,
         'font-weight': 600,
@@ -1063,9 +1149,11 @@ function graphStyles(): StylesheetJson {
     {
       selector: 'edge',
       style: {
-        width: 1.25,
+        width: 1.4,
         'line-color': 'data(color)',
-        'curve-style': 'straight',
+        'curve-style': 'unbundled-bezier',
+        'control-point-distances': 'data(bend)',
+        'control-point-weights': 0.5,
         'line-cap': 'round',
         label: 'data(label)',
         'font-family': font,
@@ -1075,25 +1163,55 @@ function graphStyles(): StylesheetJson {
         'text-background-color': COLOR.bg,
         'text-background-opacity': 1,
         'text-background-shape': 'round-rectangle',
-        'text-background-padding': '3px',
+        'text-background-padding': '4px',
         'text-border-width': 1,
         'text-border-color': COLOR.line,
         'text-border-opacity': 1,
         'overlay-opacity': 0,
+        'transition-property': 'opacity',
+        'transition-duration': 200,
       },
     },
-    { selector: 'edge[kind = "substitute_for"]', style: { color: COLOR.warning } },
-    { selector: 'edge[kind = "same_category"]', style: { 'line-style': 'dashed' } },
+    // serupa: the strongest link, a terracotta line with a soft glow.
+    {
+      selector: 'edge[kind = "similar_to"]',
+      style: {
+        width: 2.5,
+        'underlay-color': COLOR.accent,
+        'underlay-opacity': 0.16,
+        'underlay-padding': 3.5,
+        color: COLOR.accentStrong,
+        'text-background-color': COLOR.accentSubtle,
+        'text-border-color': COLOR.accent,
+      },
+    },
+    // variasi: round dots.
+    {
+      selector: 'edge[kind = "variation_of"]',
+      style: { width: 3.2, 'line-style': 'dashed', 'line-dash-pattern': [0.1, 7] },
+    },
+    // pasangan: two thin parallel lines (a canvas-coloured core with an outline on each side).
+    {
+      selector: 'edge[kind = "pairs_with"]',
+      style: { width: 1.2, 'line-color': COLOR.hover, 'line-outline-width': 1.1, 'line-outline-color': COLOR.muted },
+    },
+    // pengganti: amber dashes.
+    {
+      selector: 'edge[kind = "substitute_for"]',
+      style: { width: 1.6, 'line-style': 'dashed', 'line-dash-pattern': [6, 5], color: COLOR.warning },
+    },
+    { selector: 'edge[kind = "same_category"]', style: { width: 1.2, 'line-style': 'dashed', 'line-dash-pattern': [4, 4] } },
+    { selector: 'edge.dimmed', style: { opacity: 0.35 } },
     {
       selector: 'edge.highlight',
       style: {
-        width: 2,
-        'line-color': COLOR.accent,
         color: COLOR.accentStrong,
         'text-background-color': COLOR.accentSubtle,
         'text-border-color': COLOR.accent,
         'z-index': 10,
       },
     },
+    // Plain lines (bahan and the rest) take the accent when they belong to the selected node.
+    { selector: 'edge.highlight[kind = "uses"], edge.highlight[kind = "inspired_by"]', style: { width: 2, 'line-color': COLOR.accent } },
   ] as StylesheetJson
 }

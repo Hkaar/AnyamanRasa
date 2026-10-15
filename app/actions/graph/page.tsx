@@ -12,7 +12,7 @@ export function GraphPage(handle: Handle<{ shell: Shell; graph: GraphNeighborhoo
     let { shell, graph, state } = handle.props
     let center = graph.nodes.find((node) => node.key === graph.center)
     return (
-      <SiteLayout shell={shell} active="graph" footer={false} title={`Graf · ${center?.name ?? 'Resep'}`}>
+      <SiteLayout shell={shell} active="graph" footer={false} fullWidth title={`Graf · ${center?.name ?? 'Resep'}`}>
         <GraphExplorer initial={graph} state={state} />
         <noscript>
           <p class={cn(pageX, 'py-4 text-sm text-muted')}>
