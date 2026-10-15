@@ -1,4 +1,6 @@
+import { redirect } from 'remix/response/redirect'
 import { createController } from 'remix/router'
+import { Session } from 'remix/session'
 
 import { assets } from '../assets.ts'
 import { loadNeighborhood, mostConnectedRecipeKey } from '../data/graph.ts'
@@ -7,6 +9,7 @@ import { serveMedia } from '../data/media.ts'
 import { findPantryMatches } from '../data/pantry.ts'
 import { type HomeTab, getSiteStats, listHomeRecipes } from '../data/recipes.ts'
 import { DEFAULT_EDGE_KINDS } from '../domain/graph.ts'
+import { OAUTH_VERIFIER_KEY } from './auth/sign-in.ts'
 import { routes } from '../routes.ts'
 import { HomePage } from './home-page.tsx'
 import { getShell } from './shell.tsx'
@@ -27,6 +30,18 @@ export default createController(routes, {
     },
 
     async home(context) {
+      // Supabase falls back to the Site URL (this page) when the callback is missing from its
+      // Redirect URLs allow-list. The code is still valid: finish the sign-in this browser started.
+      let oauthCode = context.url.searchParams.get('code')
+      if (oauthCode && typeof context.get(Session)?.get(OAUTH_VERIFIER_KEY) === 'string') {
+        console.warn(
+          'Google sign-in returned to "/" instead of the callback: add it to Supabase Auth → URL Configuration → Redirect URLs.',
+        )
+        let callback = new URL(routes.auth.googleCallback.href(), context.url)
+        callback.searchParams.set('code', oauthCode)
+        return redirect(`${callback.pathname}${callback.search}`, 303)
+      }
+
       let db = context.db
       let tabParam = context.url.searchParams.get('tab')
       let tab = HOME_TABS.find((value) => value === tabParam) ?? 'populer'

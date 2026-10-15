@@ -19,8 +19,24 @@ export function signIn(context: AppContext, userId: string) {
  * proxy's internal origin never leaks into redirect URLs.
  */
 export function publicUrl(context: AppContext, path: string): string {
-  let origin = process.env.PUBLIC_URL?.replace(/\/+$/, '') ?? context.url.origin
-  return `${origin}${path}`
+  return `${configuredOrigin() ?? context.url.origin}${path}`
+}
+
+let warnedInvalidPublicUrl = false
+
+/** PUBLIC_URL as an origin, or null when unset or not a real URL (e.g. a "<your-domain>" placeholder). */
+function configuredOrigin(): string | null {
+  let value = process.env.PUBLIC_URL?.trim()
+  if (!value) return null
+  try {
+    let url = new URL(value)
+    if (url.protocol === 'http:' || url.protocol === 'https:') return url.origin
+  } catch {}
+  if (!warnedInvalidPublicUrl) {
+    warnedInvalidPublicUrl = true
+    console.warn(`PUBLIC_URL "${value}" is not a valid http(s) URL; using the request origin instead.`)
+  }
+  return null
 }
 
 /** Errors the Google flow reports back to the login page (`?galat=`); never free text. */

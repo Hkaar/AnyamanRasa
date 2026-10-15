@@ -129,6 +129,43 @@ describe('google sign-in', () => {
     assert.match(await (await client.get('/u/sariwulandari')).text(), /Edit profil/)
   })
 
+  it('ignores a placeholder PUBLIC_URL and returns to the real origin', async () => {
+    let previous = process.env.PUBLIC_URL
+    let warn = console.warn
+    process.env.PUBLIC_URL = 'https://<your-domain>'
+    console.warn = () => {}
+    try {
+      await startGoogle(createClient())
+    } finally {
+      if (previous === undefined) delete process.env.PUBLIC_URL
+      else process.env.PUBLIC_URL = previous
+      console.warn = warn
+    }
+  })
+
+  it('finishes sign-in when Supabase falls back to the Site URL with the code', async () => {
+    let client = createClient()
+    await startGoogle(client, '/cari-bahan')
+    let code = encodeURIComponent(`google|${SARI}|Sari W`)
+    let warn = console.warn
+    console.warn = () => {}
+    try {
+      let home = await client.get(`/?code=${code}`)
+      assert.equal(home.status, 303)
+      let forwarded = new URL(home.headers.get('Location')!, 'http://localhost')
+      assert.equal(forwarded.pathname, '/masuk/google/callback')
+      assert.equal(forwarded.searchParams.get('code'), `google|${SARI}|Sari W`)
+      let callback = await client.get(home.headers.get('Location')!)
+      assert.equal(callback.headers.get('Location'), '/cari-bahan')
+    } finally {
+      console.warn = warn
+    }
+
+    // Without a sign-in in progress, `?code=` is just ignored.
+    let stranger = await createClient().get(`/?code=${code}`)
+    assert.equal(stranger.status, 200)
+  })
+
   it('refuses a callback this browser did not start (login CSRF) or a wrong verifier', async () => {
     let stranger = createClient()
     let response = await stranger.get(`/masuk/google/callback?code=${encodeURIComponent(`google|${SARI}|Sari`)}`)
