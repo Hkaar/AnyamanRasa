@@ -7,7 +7,7 @@ import { isUsernameTaken, linkIdentity } from '../../data/users.ts'
 import { text, validateUsername } from '../../domain/validation.ts'
 import { routes } from '../../routes.ts'
 import { safeRedirectTarget, setFlash } from '../shell.tsx'
-import { type LoginErrorCode, OAUTH_RETURN_KEY, OAUTH_VERIFIER_KEY, publicUrl, signIn } from './sign-in.ts'
+import { type LoginErrorCode, OAUTH_RETURN_KEY, OAUTH_VERIFIER_KEY, PENDING_SIGNUP_KEY, publicUrl, signIn } from './sign-in.ts'
 
 const loginWithError = (code: LoginErrorCode) => `${routes.auth.login.index.href()}?galat=${code}`
 
@@ -61,14 +61,13 @@ export default createController(routes.auth, {
 
       let link = await linkIdentity(context.db, result.value)
       if (!link.ok) {
-        return redirect(loginWithError(link.error), 303)
+        if (link.error !== 'needs-consent') return redirect(loginWithError(link.error), 303)
+        // New account: the identity waits in the (signed) session until the terms are accepted.
+        session.set(PENDING_SIGNUP_KEY, result.value)
+        return redirect(routes.auth.consent.index.href(), 303)
       }
 
       signIn(context, link.viewer.id)
-      if (link.created) {
-        setFlash(context, { message: `Selamat datang, ${link.viewer.name}! Atur nama pengguna dan profilmu di sini.` })
-        return redirect(routes.profile.edit.index.href(), 303)
-      }
       setFlash(context, { message: `Selamat datang kembali, ${link.viewer.name}.` })
       return redirect(returnTo, 303)
     },

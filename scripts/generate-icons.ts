@@ -16,6 +16,8 @@ const names = [
   'zoom-out', 'map-pin', 'calendar', 'copy', 'archive-restore', 'shield',
   'sparkle', 'shield-check', 'bookmark-check', 'log-in', 'qr-code', 'mail',
   'unplug', 'book-x', 'cooking-pot', 'rotate-cw', 'wifi-off', 'upload', 'user-round-cog', 'key-round',
+  'chef-hat', 'credit-card', 'flask-conical', 'lock', 'smartphone', 'ticket-percent', 'wallet', 'calendar-days',
+  'crown', 'receipt-text',
 ]
 
 const pascal = (name: string) =>

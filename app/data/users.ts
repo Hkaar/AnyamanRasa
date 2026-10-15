@@ -109,13 +109,18 @@ export async function availableUsername(db: Database, seed: string): Promise<str
 
 export type IdentityLink =
   | { ok: true; viewer: Viewer; created: boolean }
-  | { ok: false; error: 'email-linked-elsewhere' | 'email-unverified' }
+  | { ok: false; error: 'email-linked-elsewhere' | 'email-unverified' | 'needs-consent' }
 
 /**
  * Maps a verified Supabase identity to a local user: by linked id, then by
- * verified email (accounts that predate the link), else a new profile.
+ * verified email (accounts that predate the link), else a new profile. A new
+ * profile needs the terms accepted first: without `create` it returns `needs-consent`.
  */
-export async function linkIdentity(db: Database, identity: AuthIdentity): Promise<IdentityLink> {
+export async function linkIdentity(
+  db: Database,
+  identity: AuthIdentity,
+  options: { create: boolean } = { create: false },
+): Promise<IdentityLink> {
   let linked = await queryRow<ViewerRow>(
     db,
     sql`select ${viewerColumns} from users u where u.auth_user_id = ${identity.id}`,
@@ -133,6 +138,7 @@ export async function linkIdentity(db: Database, identity: AuthIdentity): Promis
     await db.exec(sql`update users set auth_user_id = ${identity.id}, updated_at = now() where id = ${byEmail.id}`)
     return { ok: true, viewer: toViewer(byEmail), created: false }
   }
+  if (!options.create) return { ok: false, error: 'needs-consent' }
 
   let username = await availableUsername(db, identity.email.split('@')[0] ?? identity.name ?? 'koki')
   let viewer = await createUser(db, {

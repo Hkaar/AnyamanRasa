@@ -7,14 +7,18 @@ import { createMiddleware, createRouter, type Middleware, type MiddlewareContext
 import adminController from './actions/admin/controller.tsx'
 import adminRecipesController from './actions/admin/recipes/controller.tsx'
 import authController from './actions/auth/controller.tsx'
+import consentController from './actions/auth/consent/controller.tsx'
 import loginController from './actions/auth/login/controller.tsx'
 import registerController from './actions/auth/register/controller.tsx'
 import controller from './actions/controller.tsx'
 import graphController from './actions/graph/controller.tsx'
 import ingredientsController from './actions/ingredients/controller.tsx'
+import legalController from './actions/legal/controller.tsx'
 import pantryController from './actions/pantry/controller.tsx'
 import profileController from './actions/profile/controller.tsx'
 import profileEditController from './actions/profile/edit/controller.tsx'
+import subscriptionController from './actions/subscription/controller.tsx'
+import subscriptionPaymentController from './actions/subscription/payment/controller.tsx'
 import recipesController from './actions/recipes/controller.tsx'
 import createRecipeController from './actions/recipes/create/controller.tsx'
 import editRecipeController from './actions/recipes/edit/controller.tsx'
@@ -167,7 +171,11 @@ router.map(routes.graph, graphController)
 router.map(routes.auth, authController)
 router.map(routes.auth.login, loginController)
 router.map(routes.auth.register, registerController)
+router.map(routes.auth.consent, consentController)
 router.map(routes.profile, profileController)
 router.map(routes.profile.edit, profileEditController)
+router.map(routes.legal, legalController)
+router.map(routes.subscription, subscriptionController)
+router.map(routes.subscription.payment, subscriptionPaymentController)
 router.map(routes.admin, adminController)
 router.map(routes.admin.recipes, adminRecipesController)

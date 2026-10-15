@@ -1,11 +1,28 @@
 import { Session } from 'remix/session'
 
+import type { AuthIdentity } from '../../data/auth-provider.ts'
 import { SESSION_USER_KEY } from '../../middleware/viewer.ts'
 import type { AppContext } from '../../router.ts'
 
 /** Session keys holding the in-flight Google sign-in (PKCE verifier and return path). */
 export const OAUTH_VERIFIER_KEY = 'oauthVerifier'
 export const OAUTH_RETURN_KEY = 'oauthReturnTo'
+/** A first-time Google identity waiting for the consent step (pen.dev 10d). */
+export const PENDING_SIGNUP_KEY = 'pendingSignup'
+
+export function pendingSignup(context: AppContext): AuthIdentity | null {
+  let value = context.get(Session)!.get(PENDING_SIGNUP_KEY)
+  if (typeof value !== 'object' || value === null) return null
+  let identity = value as Partial<AuthIdentity>
+  if (typeof identity.id !== 'string' || typeof identity.email !== 'string') return null
+  return {
+    id: identity.id,
+    email: identity.email,
+    emailConfirmed: identity.emailConfirmed === true,
+    name: typeof identity.name === 'string' ? identity.name : null,
+    avatarUrl: typeof identity.avatarUrl === 'string' ? identity.avatarUrl : null,
+  }
+}
 
 export function signIn(context: AppContext, userId: string) {
   let session = context.get(Session)!

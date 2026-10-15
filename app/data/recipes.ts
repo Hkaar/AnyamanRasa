@@ -448,6 +448,16 @@ export async function countRecipesByAuthor(db: Database, userId: string, options
   return row?.total ?? 0
 }
 
+/** Recipes a user has saved (the Gratis plan's "Resep tersimpan" meter). */
+export async function countSavedRecipes(db: Database, userId: string): Promise<number> {
+  let row = await queryRow<{ total: number }>(
+    db,
+    sql`select count(*)::int as total from saved_recipes s join recipes r on r.id = s.recipe_id
+        where s.user_id = ${userId} and r.status = 'published'`,
+  )
+  return row?.total ?? 0
+}
+
 export async function listSavedRecipes(db: Database, userId: string): Promise<RecipeSummary[]> {
   let rows = await queryRows<SummaryRow>(
     db,

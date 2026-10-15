@@ -148,6 +148,29 @@ document.addEventListener('click', (event) => {
   else syncOfflineBanner()
 })
 
+// Simulated payment (subscription/page.tsx, pen.dev 14c): `data-countdown` ticks down from its
+// seconds as mm:ss, and `data-auto-advance` moves on to its URL after `data-advance-after` seconds.
+let paymentTimer: ReturnType<typeof setInterval> | undefined
+function initPaymentWait() {
+  clearInterval(paymentTimer)
+  let advance = document.querySelector<HTMLElement>('[data-auto-advance]')
+  let countdown = document.querySelector<HTMLElement>('[data-countdown]')
+  if (!advance && !countdown) return
+  let started = Date.now()
+  paymentTimer = setInterval(() => {
+    let elapsed = Math.floor((Date.now() - started) / 1000)
+    if (countdown?.isConnected) {
+      let left = Math.max(0, Number(countdown.dataset.countdown) - elapsed)
+      countdown.textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`
+    }
+    if (!advance?.isConnected) return clearInterval(paymentTimer)
+    if (elapsed >= Number(advance.dataset.advanceAfter)) {
+      clearInterval(paymentTimer)
+      location.assign(advance.dataset.autoAdvance!)
+    }
+  }, 1000)
+}
+
 // Per-page setup: on the first load, and after each client-side navigation (Remix swaps the
 // page in place through the Navigation API, so no new document or `load` event happens).
 function initPage() {
@@ -155,6 +178,7 @@ function initPage() {
   syncOfflineBanner()
   initPageMotion()
   initLoadMore()
+  initPaymentWait()
 }
 
 startPageMotion()

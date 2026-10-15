@@ -4,6 +4,7 @@ import {
   AUTHOR_SORTS,
   type AuthorSort,
   countRecipesByAuthor,
+  countSavedRecipes,
   listRecipesByAuthor,
   listSavedRecipes,
 } from '../../data/recipes.ts'
@@ -73,6 +74,9 @@ export default createController(routes.profile, {
         ])
       }
 
+      // Own profile: the Gratis plan banner shows how many of the free saves are used.
+      let savedCount = !isOwn ? null : tab === 'disimpan' ? total : await countSavedRecipes(db, profile.id)
+
       return context.render(
         <ProfilePage
           shell={getShell(context)}
@@ -84,6 +88,7 @@ export default createController(routes.profile, {
           recipes={recipes}
           total={total}
           variations={variations}
+          savedCount={savedCount}
         />,
       )
     },

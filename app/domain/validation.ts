@@ -78,3 +78,12 @@ export function validateRegistration(
     ? { ok: false, errors }
     : { ok: true, value: { username, email, password } }
 }
+
+/** Required boxes on the sign-up consent step (pen.dev 10d). */
+export const CONSENT_FIELDS = ['setuju_syarat', 'setuju_privasi', 'usia'] as const
+
+export function validateConsent(form: FormData): string | null {
+  return CONSENT_FIELDS.every((field) => form.get(field) === '1')
+    ? null
+    : 'Centang ketiga persetujuan untuk membuat akun.'
+}

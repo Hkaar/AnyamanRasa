@@ -377,6 +377,13 @@ function SiteFooter() {
           { label: 'Profil', href: routes.profile.edit.index.href() },
         ],
       },
+      {
+        title: 'Tentang',
+        links: [
+          { label: 'Syarat & Ketentuan', href: routes.legal.terms.href() },
+          { label: 'Kebijakan Privasi', href: routes.legal.privacy.href() },
+        ],
+      },
     ]
     return (
       <footer class="bg-surface-dark text-white">

@@ -3,7 +3,7 @@ import type { Handle, RemixNode } from 'remix/component'
 import { routes } from '../../routes.ts'
 import { authErrorMessage } from '../../data/auth-provider.ts'
 import { Document } from '../../ui/document.tsx'
-import { Icon } from '../../ui/icon.tsx'
+import { Icon, type IconName } from '../../ui/icon.tsx'
 import { CsrfField, Logo } from '../../ui/primitives.tsx'
 import type { Shell } from '../../ui/shell.ts'
 import { PasswordInput } from './public/password-input.tsx'
@@ -11,6 +11,7 @@ import { UsernameInput } from './public/username-input.tsx'
 import { Button, ButtonLink } from '../../ui/button.tsx'
 import { inputClass } from '../../ui/input.tsx'
 import { Field, fieldAttrs, labelClass } from '../../ui/label.tsx'
+import type { RegistrationInput } from '../../domain/validation.ts'
 import { cn, pageX } from '../../ui/utils.ts'
 
 const headingClass = 'text-[36px] leading-10 font-normal tracking-[-0.36px] text-ink lg:text-[52px] lg:leading-[57px] lg:tracking-[-0.52px]'
@@ -70,7 +71,15 @@ function AuthShell(
           </main>
           <footer class={cn(pageX, 'hidden justify-between gap-2 pb-8 text-xs tracking-[0.26px] text-faint lg:flex')}>
             <p>© 2026 AnyamanRasa</p>
-            <p>Kebijakan Privasi · Ketentuan Layanan</p>
+            <p>
+              <a href={routes.legal.privacy.href()} class="hover:text-ink">
+                Kebijakan Privasi
+              </a>
+              {' · '}
+              <a href={routes.legal.terms.href()} class="hover:text-ink">
+                Ketentuan Layanan
+              </a>
+            </p>
           </footer>
         </div>
       </Document>
@@ -402,7 +411,7 @@ function RegisterMethods(handle: Handle<{ shell: Shell; error?: string }>) {
       </div>
       <div class="mt-auto flex flex-col gap-8 lg:mt-0">
         <p class={cn(termsClass, 'text-center')}>
-          Dengan mendaftar, kamu menyetujui Ketentuan Layanan dan Kebijakan Privasi AnyamanRasa.
+          Sebelum akun dibuat, kamu akan diminta meninjau <LegalLink to="terms" /> dan <LegalLink to="privacy" />.
         </p>
         <p class="pt-1 text-center text-[13px] tracking-[0.26px] text-muted">
           Sudah punya akun?{' '}
@@ -494,11 +503,163 @@ function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'val
             </Field>
           </div>
           <Button type="submit" variant="default" class="h-[52px] text-[15px] lg:h-12">
-            Buat akun
+            Lanjut
           </Button>
-          <p class={termsClass}>Dengan mendaftar, kamu menyetujui Ketentuan Layanan dan Kebijakan Privasi AnyamanRasa.</p>
+          <p class={termsClass}>Langkah 1 dari 2 · Berikutnya kamu akan meninjau ketentuan dan kebijakan privasi.</p>
         </form>
       </div>
+    )
+  }
+}
+
+function LegalLink(handle: Handle<{ to: 'terms' | 'privacy' }>) {
+  return () => (
+    <a href={routes.legal[handle.props.to].href()} class="text-ink underline-offset-2 hover:underline">
+      {handle.props.to === 'terms' ? 'Syarat & Ketentuan' : 'Kebijakan Privasi'}
+    </a>
+  )
+}
+
+const CONSENT_POINTS: { icon: IconName; text: string }[] = [
+  { icon: 'shield-check', text: 'Kami tidak pernah menjual datamu.' },
+  { icon: 'chef-hat', text: 'Resepmu tetap milikmu. Orang lain boleh membuat variasi dengan mencantumkan sumber.' },
+  { icon: 'refrigerator', text: 'Isi dapurmu hanya dipakai untuk mencarikan resep yang cocok.' },
+  { icon: 'mail', text: 'Ingin akunmu dihapus? Kirim permintaan lewat email kapan saja.' },
+]
+
+export interface ConsentPageProps {
+  shell: Shell
+  /** Email sign-up: the checked form values, carried as hidden fields to the final submit. */
+  account?: RegistrationInput
+  /** Google sign-up: the identity waiting in the session. */
+  google?: { email: string }
+  error?: string
+}
+
+/** pen.dev 10d: step 2 of sign-up. The account is created only after the required boxes are ticked. */
+export function ConsentPage(handle: Handle<ConsentPageProps>) {
+  return () => {
+    let { shell, account, google, error } = handle.props
+    let boxes: { name: string; label: RemixNode; read?: 'terms' | 'privacy' }[] = [
+      { name: 'setuju_syarat', label: 'Saya menyetujui Syarat & Ketentuan', read: 'terms' },
+      { name: 'setuju_privasi', label: 'Saya menyetujui Kebijakan Privasi dan pemrosesan data sesuai UU PDP', read: 'privacy' },
+      { name: 'usia', label: 'Saya berusia 13 tahun atau lebih' },
+    ]
+    let backClass = 'flex items-center gap-1.5 self-start text-[13px] font-medium tracking-[0.26px] text-muted hover:text-ink'
+    return (
+      <AuthShell
+        title="Setujui ketentuan"
+        prompt="Sudah punya akun?"
+        linkLabel="Masuk"
+        linkHref={routes.auth.login.index.href()}
+        panel="register"
+      >
+        <form
+          method="post"
+          action={account ? routes.auth.register.action.href() : routes.auth.consent.action.href()}
+          class="flex flex-1 flex-col gap-7"
+          novalidate
+        >
+          <CsrfField token={shell.csrfToken} />
+          {account && (
+            <>
+              <input type="hidden" name="username" value={account.username} />
+              <input type="hidden" name="email" value={account.email} />
+              <input type="hidden" name="password" value={account.password} />
+              <input type="hidden" name="confirm" value={account.password} />
+              <button type="submit" name="langkah" value="data" formNoValidate class={backClass}>
+                <Icon name="arrow-left" />
+                Kembali ke data akun
+              </button>
+            </>
+          )}
+          {google && (
+            <a href={routes.auth.register.index.href()} class={backClass}>
+              <Icon name="arrow-left" />
+              Pilihan daftar lainnya
+            </a>
+          )}
+          <div class="flex flex-col gap-3">
+            <p class="flex items-center gap-2.5 text-xs tracking-[0.24px] text-muted">
+              <span class="flex gap-1.5" aria-hidden="true">
+                <span class="h-[3px] w-6 rounded-full bg-accent" />
+                <span class="h-[3px] w-6 rounded-full bg-accent" />
+              </span>
+              Langkah 2 dari 2
+            </p>
+            <h1 class={headingClass}>Satu langkah lagi</h1>
+            <p class={leadClass}>
+              {google ? (
+                <>
+                  Sebelum akun untuk <span class="text-ink">{google.email}</span> dibuat, baca ringkasan singkat ini dan setujui
+                  ketentuan kami.
+                </>
+              ) : (
+                'Sebelum akunmu dibuat, baca ringkasan singkat ini dan setujui ketentuan kami.'
+              )}
+            </p>
+          </div>
+          <div class="flex flex-col gap-3 rounded-md bg-[linear-gradient(135deg,var(--color-accent-subtle),var(--color-subtle))] p-5">
+            <p class="flex items-center gap-2 text-[13px] font-medium tracking-[0.26px] text-accent-strong">
+              <Icon name="sparkles" size={15} />
+              Ringkasnya
+            </p>
+            <ul class="flex flex-col gap-2.5">
+              {CONSENT_POINTS.map((point) => (
+                <li key={point.text} class="flex gap-3 text-[13px] leading-5 tracking-[0.26px] text-ink">
+                  <Icon name={point.icon} size={15} class="mt-0.5 shrink-0 text-muted" />
+                  {point.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {error && <FormAlert message={error} />}
+          <fieldset class="flex flex-col gap-2">
+            <legend class="sr-only">Persetujuan</legend>
+            {boxes.map((box) => (
+              <div
+                key={box.name}
+                class={cn(
+                  'flex items-center gap-3 rounded-md px-3.5 py-3 transition-colors has-checked:bg-subtle',
+                  error ? 'bg-error-subtle' : 'bg-subtle',
+                )}
+              >
+                <input
+                  id={box.name}
+                  type="checkbox"
+                  name={box.name}
+                  value="1"
+                  required
+                  aria-invalid={error ? 'true' : undefined}
+                  class="size-5 shrink-0 cursor-pointer rounded-xs accent-accent"
+                />
+                <label for={box.name} class="flex-1 cursor-pointer text-[13px] leading-5 tracking-[0.26px] text-ink">
+                  {box.label}
+                </label>
+                {box.read && (
+                  <a
+                    href={routes.legal[box.read].href()}
+                    target="_blank"
+                    class="text-xs font-medium tracking-[0.24px] text-accent-strong hover:underline"
+                  >
+                    Baca
+                    <span class="sr-only"> {box.read === 'terms' ? 'Syarat & Ketentuan' : 'Kebijakan Privasi'} (tab baru)</span>
+                  </a>
+                )}
+              </div>
+            ))}
+          </fieldset>
+          <div class="mt-auto flex flex-col gap-4 lg:mt-0">
+            <Button type="submit" name="langkah" value="ketentuan" variant="default" class="h-[52px] text-[15px] lg:h-12">
+              <Icon name="check" />
+              Setuju &amp; buat akun
+            </Button>
+            <a href={routes.home.href()} class="text-center text-sm tracking-[0.28px] text-muted hover:text-ink lg:hidden">
+              Batal
+            </a>
+          </div>
+        </form>
+      </AuthShell>
     )
   }
 }

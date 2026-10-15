@@ -2,6 +2,7 @@ import { redirect } from 'remix/response/redirect'
 import { createController } from 'remix/router'
 
 import { isProvidedFile, storeImage, uploadErrorMessage } from '../../../data/media.ts'
+import { countSavedRecipes } from '../../../data/recipes.ts'
 import { findProfileById, isUsernameTaken, updateProfile } from '../../../data/users.ts'
 import { type FieldErrors, text, validateUsername } from '../../../domain/validation.ts'
 import { routes } from '../../../routes.ts'
@@ -15,15 +16,21 @@ export default createController(routes.profile.edit, {
     async index(context) {
       let viewer = requireViewer(context)
       if (viewer instanceof Response) return viewer
-      let profile = await findProfileById(context.db, viewer.id)
+      let [profile, savedCount] = await Promise.all([
+        findProfileById(context.db, viewer.id),
+        countSavedRecipes(context.db, viewer.id),
+      ])
       if (!profile) return notFound(context)
-      return context.render(<ProfileEditPage shell={getShell(context)} profile={profile} />)
+      return context.render(<ProfileEditPage shell={getShell(context)} profile={profile} savedCount={savedCount} />)
     },
 
     async action(context) {
       let viewer = requireViewer(context)
       if (viewer instanceof Response) return viewer
-      let profile = await findProfileById(context.db, viewer.id)
+      let [profile, savedCount] = await Promise.all([
+        findProfileById(context.db, viewer.id),
+        countSavedRecipes(context.db, viewer.id),
+      ])
       if (!profile) return notFound(context)
 
       let form = context.formData
@@ -55,7 +62,7 @@ export default createController(routes.profile.edit, {
 
       if (Object.keys(errors).length > 0) {
         return context.render(
-          <ProfileEditPage shell={getShell(context)} profile={{ ...profile, ...values }} errors={errors} />,
+          <ProfileEditPage shell={getShell(context)} profile={{ ...profile, ...values }} savedCount={savedCount} errors={errors} />,
           { status: 400 },
         )
       }

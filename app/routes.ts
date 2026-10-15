@@ -29,6 +29,7 @@ export const routes = route({
   auth: {
     login: form('/masuk'),
     register: form('/daftar'),
+    consent: form('/daftar/ketentuan'),
     logout: post('/keluar'),
     google: post('/masuk/google'),
     googleCallback: get('/masuk/google/callback'),
@@ -37,6 +38,16 @@ export const routes = route({
   profile: {
     show: get('/u/:username'),
     edit: form('/profil/ubah'),
+  },
+  subscription: {
+    index: get('/langganan'),
+    payment: form('/langganan/pembayaran'),
+    pending: get('/langganan/menunggu'),
+    done: get('/langganan/selesai'),
+  },
+  legal: {
+    terms: get('/syarat-ketentuan'),
+    privacy: get('/kebijakan-privasi'),
   },
   admin: {
     recipes: form('/admin/resep'),

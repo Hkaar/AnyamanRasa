@@ -4,6 +4,9 @@ import { describe, it } from 'remix/test'
 import { SARI, createClient } from '../../../test/client.ts'
 import { fakeAuthId } from '../../../test/fake-auth.ts'
 
+/** The required boxes of the sign-up consent step (pen.dev 10d). */
+const CONSENT = { langkah: 'ketentuan', setuju_syarat: '1', setuju_privasi: '1', usia: '1' }
+
 describe('authentication', () => {
   it('rejects wrong passwords without revealing which field is wrong', async () => {
     let response = await createClient().login(SARI, 'salah12345')
@@ -66,14 +69,25 @@ describe('authentication', () => {
     assert.equal(free.available, true)
   })
 
-  it('registers, signs in, and logs out', async () => {
+  it('registers after the consent step, signs in, and logs out', async () => {
     let client = createClient()
-    let response = await client.post('/daftar', {
-      username: 'koki_uji',
-      email: 'koki.uji@example.com',
-      password: 'rahasia123',
-      confirm: 'rahasia123',
-    })
+    let account = { username: 'koki_uji', email: 'koki.uji@example.com', password: 'rahasia123', confirm: 'rahasia123' }
+    let consent = await client.post('/daftar', account)
+    assert.equal(consent.status, 200)
+    let consentHtml = await consent.text()
+    assert.match(consentHtml, /Satu langkah lagi/)
+    assert.match(consentHtml, /name="username" value="koki_uji"/)
+    assert.equal((await client.get('/u/koki_uji')).status, 404, 'no account before consent')
+
+    let unticked = await client.post('/daftar', { ...account, langkah: 'ketentuan', setuju_syarat: '1' })
+    assert.equal(unticked.status, 400)
+    assert.match(await unticked.text(), /Centang ketiga persetujuan/)
+
+    let back = await (await client.post('/daftar', { ...account, langkah: 'data' })).text()
+    assert.match(back, /Daftar dengan email/)
+    assert.match(back, /value="koki.uji@example.com"/)
+
+    let response = await client.post('/daftar', { ...account, ...CONSENT })
     assert.equal(response.status, 303)
     assert.match(await (await client.get('/u/koki_uji')).text(), /Edit profil/)
 
@@ -96,6 +110,7 @@ describe('authentication', () => {
       email: 'koki+konfirmasi@example.com',
       password: 'rahasia123',
       confirm: 'rahasia123',
+      ...CONSENT,
     })
     assert.equal(response.status, 200)
     assert.match(await response.text(), /Cek emailmu/)
@@ -123,12 +138,23 @@ describe('google sign-in', () => {
     assert.equal(location.searchParams.get('redirect_to'), 'http://localhost/masuk/google/callback')
   }
 
-  it('creates a profile for a first-time Google user and asks them to set it up', async () => {
+  it('asks a first-time Google user to accept the terms, then creates their profile', async () => {
     let client = createClient()
     await startGoogle(client)
     let callback = await client.get(`/masuk/google/callback?code=${encodeURIComponent('google|budi.google@gmail.com|Budi Google')}`)
     assert.equal(callback.status, 303)
-    assert.equal(callback.headers.get('Location'), '/profil/ubah')
+    assert.equal(callback.headers.get('Location'), '/daftar/ketentuan')
+    assert.equal((await client.get('/resep/baru')).status, 303, 'not signed in before consent')
+
+    let consent = await (await client.get('/daftar/ketentuan')).text()
+    assert.match(consent, /budi.google@gmail.com/)
+    let unticked = await client.post('/daftar/ketentuan', { usia: '1' })
+    assert.equal(unticked.status, 400)
+
+    let created = await client.post('/daftar/ketentuan', CONSENT)
+    assert.equal(created.status, 303)
+    assert.equal(created.headers.get('Location'), '/profil/ubah')
+    assert.equal((await createClient().get('/daftar/ketentuan')).headers.get('Location'), '/daftar')
 
     let settings = await (await client.get('/profil/ubah')).text()
     assert.match(settings, /Budi Google/)

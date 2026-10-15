@@ -7,6 +7,7 @@ import { difficultyLabel, formatCount, formatMinutes } from '../domain/format.ts
 import type { GraphNeighborhood } from '../domain/graph.ts'
 import type { PantryIngredient, PantryMatch } from '../domain/pantry.ts'
 import type { RecipeSummary } from '../domain/types.ts'
+import { PLANS as SUBSCRIPTION_PLANS, formatRupiah, yearlySaving } from '../domain/subscription.ts'
 import { routes } from '../routes.ts'
 import { GraphPreview } from '../ui/graph-preview.tsx'
 import { Icon, type IconName } from '../ui/icon.tsx'
@@ -625,9 +626,11 @@ function GraphIntro(handle: Handle<{ stats: HomePageProps['stats']; graph: Graph
 interface Plan {
   name: string
   description: string
-  /** Price per month and per year (yearly billing saves 20%). */
+  /** Price per month and per year (app/domain/subscription.ts). */
   monthly: string
   yearly: string
+  /** Where the CTA leads: sign-up for Gratis, the simulated checkout for paid plans. */
+  href: string
   cta: string
   featuresLabel: string
   features: string[]
@@ -640,6 +643,7 @@ const PLANS: Plan[] = [
     description: 'Untuk kamu yang baru mulai menjelajah dapur Nusantara.',
     monthly: 'Rp0',
     yearly: 'Rp0',
+    href: routes.auth.register.index.href(),
     cta: 'Mulai Gratis',
     featuresLabel: 'Termasuk',
     features: [
@@ -652,8 +656,9 @@ const PLANS: Plan[] = [
   {
     name: 'Dapur Plus',
     description: 'Untuk juru masak rumahan yang ingin dapurnya lebih teratur.',
-    monthly: 'Rp29.000',
-    yearly: 'Rp278.400',
+    monthly: formatRupiah(SUBSCRIPTION_PLANS.plus.monthly),
+    yearly: formatRupiah(SUBSCRIPTION_PLANS.plus.yearly),
+    href: `${routes.subscription.index.href()}?paket=plus`,
     cta: 'Coba Dapur Plus',
     featuresLabel: 'Yang kamu dapat',
     features: [
@@ -669,8 +674,9 @@ const PLANS: Plan[] = [
   {
     name: 'Keluarga',
     description: 'Untuk satu rumah yang memasak dan berbelanja bersama.',
-    monthly: 'Rp49.000',
-    yearly: 'Rp470.400',
+    monthly: formatRupiah(SUBSCRIPTION_PLANS.keluarga.monthly),
+    yearly: formatRupiah(SUBSCRIPTION_PLANS.keluarga.yearly),
+    href: `${routes.subscription.index.href()}?paket=keluarga`,
     cta: 'Pilih Keluarga',
     featuresLabel: 'Termasuk',
     features: ['Semua fitur Dapur Plus', 'Hingga 5 anggota keluarga', 'Koleksi resep bersama', 'Daftar belanja bersama'],
@@ -724,7 +730,7 @@ function Pricing(_handle: Handle) {
                   {option.label}
                   {option.value === 'tahunan' && (
                     <span class="rounded-full bg-accent-subtle px-2 py-0.5 text-[11px] text-accent-strong">
-                      Hemat 20%
+                      Hemat {yearlySaving('plus')}%
                     </span>
                   )}
                 </label>
@@ -795,7 +801,7 @@ function PlanCard(handle: Handle<{ plan: Plan }>) {
             )}
           </p>
           <ButtonLink
-            href={routes.auth.register.index.href()}
+            href={plan.href}
             variant={dark ? 'default' : 'outline'}
             size="lg"
             class="w-full"

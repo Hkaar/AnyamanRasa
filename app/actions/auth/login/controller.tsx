@@ -59,7 +59,8 @@ export default createController(routes.auth.login, {
         return renderError()
       }
 
-      let link = await linkIdentity(context.db, result.value)
+      // Password accounts accepted the terms when they signed up.
+      let link = await linkIdentity(context.db, result.value, { create: true })
       if (!link.ok) {
         errors.form = 'Akun ini tidak dapat ditautkan. Hubungi admin AnyamanRasa.'
         return renderError()

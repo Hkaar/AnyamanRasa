@@ -5,6 +5,7 @@ import type { Profile } from '../../data/users.ts'
 import { formatMonthYear } from '../../domain/format.ts'
 import type { RecipeSummary } from '../../domain/types.ts'
 import type { FieldErrors } from '../../domain/validation.ts'
+import { FREE_SAVE_LIMIT, PLANS, formatRupiah } from '../../domain/subscription.ts'
 import { routes } from '../../routes.ts'
 import { Icon, type IconName } from '../../ui/icon.tsx'
 import { SiteLayout } from '../../ui/layout.tsx'
@@ -40,11 +41,13 @@ export interface ProfilePageProps {
   total: number
   /** Variation preview shown under the Resep grid. */
   variations: RecipeSummary[]
+  /** The viewer's saved-recipe count on their own profile (plan banner); null for others. */
+  savedCount: number | null
 }
 
 export function ProfilePage(handle: Handle<ProfilePageProps>) {
   return () => {
-    let { shell, profile, isOwn, tab, sort, page, recipes, total, variations } = handle.props
+    let { shell, profile, isOwn, tab, sort, page, recipes, total, variations, savedCount } = handle.props
     let base = routes.profile.show.href({ username: profile.username })
     let tabHref = (key: ProfileTab, extra: Record<string, string> = {}) => {
       let params = new URLSearchParams({ ...(key === 'resep' ? {} : { tab: key }), ...extra })
@@ -109,6 +112,8 @@ export function ProfilePage(handle: Handle<ProfilePageProps>) {
               </div>
             )}
           </header>
+
+          {savedCount !== null && <PlanBanner savedCount={savedCount} />}
 
           <div class="flex items-center justify-between gap-6">
             <nav aria-label="Konten profil" class={cn(tabsListClass, 'flex-1 lg:flex-none')}>
@@ -221,19 +226,89 @@ export function ProfilePage(handle: Handle<ProfilePageProps>) {
   }
 }
 
+/** pen.dev 09: slim upgrade banner on the viewer's own profile. */
+function PlanBanner(handle: Handle<{ savedCount: number }>) {
+  return () => (
+    <aside
+      aria-label="Paket langganan"
+      class="flex flex-col gap-4 rounded-lg bg-[linear-gradient(90deg,var(--color-accent-subtle),#F7E3D8)] p-4 sm:flex-row sm:items-center sm:gap-5 sm:py-4 sm:pr-5 sm:pl-6"
+    >
+      <div class="flex flex-1 items-center gap-4">
+        <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-bg text-accent-strong" aria-hidden="true">
+          <Icon name="sparkles" size={16} />
+        </span>
+        <div class="flex min-w-0 flex-col gap-0.5">
+          <p class="text-sm font-medium tracking-[0.28px] text-ink">
+            Kamu memakai paket Gratis — {handle.props.savedCount} dari {FREE_SAVE_LIMIT} resep tersimpan
+          </p>
+          <p class="text-xs tracking-[0.24px] text-muted">
+            Upgrade ke Dapur Plus untuk simpan resep tanpa batas, mulai {formatRupiah(PLANS.plus.monthly)}/bulan.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-5">
+        <SavedMeter count={handle.props.savedCount} class="hidden w-[150px] md:flex" compact />
+        <ButtonLink href={`${routes.subscription.index.href()}?paket=plus`} variant="default" class="flex-1 sm:flex-none">
+          <Icon name="arrow-up-right" />
+          Upgrade
+        </ButtonLink>
+      </div>
+    </aside>
+  )
+}
+
+/** "Resep tersimpan n / 20": informational only, saving is never blocked. */
+function SavedMeter(handle: Handle<{ count: number; compact?: boolean; class?: string }>) {
+  return () => {
+    let { count, compact } = handle.props
+    let used = Math.min(100, Math.round((count / FREE_SAVE_LIMIT) * 100))
+    return (
+      <div class={cn('flex flex-col gap-1.5', handle.props.class)}>
+        <p class={cn('flex justify-between gap-3 tracking-[0.24px]', compact ? 'text-[11px]' : 'text-xs')}>
+          <span class={compact ? 'text-muted' : 'font-medium text-ink'}>Resep tersimpan</span>
+          <span class="font-medium text-accent-strong tabular-nums">
+            {count} / {FREE_SAVE_LIMIT}
+          </span>
+        </p>
+        <div
+          role="meter"
+          aria-label="Resep tersimpan"
+          aria-valuemin={0}
+          aria-valuemax={FREE_SAVE_LIMIT}
+          aria-valuenow={Math.min(count, FREE_SAVE_LIMIT)}
+          class={cn('overflow-hidden rounded-full', compact ? 'h-1 bg-bg' : 'h-1.5 bg-hover')}
+        >
+          <div class="h-full rounded-full bg-accent" style={{ width: `${used}%` }} />
+        </div>
+        {!compact && (
+          <p class="text-[11px] tracking-[0.22px] text-faint">
+            {count < FREE_SAVE_LIMIT ? `${FREE_SAVE_LIMIT - count} slot tersisa` : 'Batas paket Gratis tercapai'}
+          </p>
+        )}
+      </div>
+    )
+  }
+}
+
 const SETTINGS_SECTIONS = [
   { id: 'profil-publik', label: 'Profil publik', icon: 'user-round' },
   { id: 'akun', label: 'Akun', icon: 'shield-check' },
+  { id: 'langganan', label: 'Langganan & tagihan', icon: 'crown' },
 ] as const
 
 const settingsInput = 'h-12 bg-hover'
 
 /** pen.dev 09b "Pengaturan", limited to what the app stores: the public profile and the account. */
 export function ProfileEditPage(
-  handle: Handle<{ shell: Shell; profile: Profile; errors?: FieldErrors<'name' | 'username' | 'bio' | 'location' | 'avatar'> }>,
+  handle: Handle<{
+    shell: Shell
+    profile: Profile
+    savedCount: number
+    errors?: FieldErrors<'name' | 'username' | 'bio' | 'location' | 'avatar'>
+  }>,
 ) {
   return () => {
-    let { shell, profile, errors = {} } = handle.props
+    let { shell, profile, savedCount, errors = {} } = handle.props
     let profileHref = routes.profile.show.href({ username: profile.username })
     let errorCount = Object.keys(errors).length
     return (
@@ -417,6 +492,8 @@ export function ProfileEditPage(
                 </form>
               </section>
 
+              <SubscriptionSettings savedCount={savedCount} />
+
               <div
                 data-changes-bar
                 class="group sticky bottom-4 z-20 flex flex-col gap-3 rounded-lg bg-surface-dark p-3 pl-5 text-white shadow-modal sm:flex-row sm:items-center"
@@ -440,6 +517,85 @@ export function ProfileEditPage(
       </SiteLayout>
     )
   }
+}
+
+/**
+ * pen.dev 09b "Langganan & tagihan". Every account is on Gratis: the checkout is a simulation and
+ * stores nothing, so there is no payment method or billing history to show yet.
+ */
+function SubscriptionSettings(handle: Handle<{ savedCount: number }>) {
+  return () => (
+    <section id="langganan" aria-labelledby="langganan-judul" class="flex scroll-mt-24 flex-col gap-6">
+      <SettingsHeading
+        id="langganan-judul"
+        title="Langganan & tagihan"
+        description="Lihat paketmu, pantau batas pemakaian, dan atur cara membayar."
+      />
+      <div class="flex flex-col gap-5 rounded-lg bg-subtle p-5">
+        <div class="flex items-center gap-4">
+          <span class="flex size-11 shrink-0 items-center justify-center rounded-md bg-bg text-ink" aria-hidden="true">
+            <Icon name="chef-hat" size={18} />
+          </span>
+          <div class="flex flex-1 flex-col gap-0.5">
+            <p class="text-[11px] font-medium tracking-[0.8px] text-faint uppercase">Paket saat ini</p>
+            <p class="flex items-center gap-2 text-[22px] leading-tight tracking-[-0.22px] text-ink">
+              Gratis
+              <span class="rounded-full bg-hover px-2 py-0.5 text-[11px] tracking-[0.22px] text-muted">Aktif</span>
+            </p>
+          </div>
+          <p class="text-xs tracking-[0.24px] text-muted">Rp0 · tanpa kartu</p>
+        </div>
+        <SavedMeter count={handle.props.savedCount} />
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        {(['plus', 'keluarga'] as const).map((id) => {
+          let plan = PLANS[id]
+          let featured = id === 'plus'
+          return (
+            <article key={id} class={cn('flex flex-col gap-4 rounded-lg p-5', featured ? 'bg-accent-subtle' : 'bg-subtle')}>
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="text-[15px] font-medium text-ink">{plan.name}</h3>
+                {featured && (
+                  <span class="flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-white">
+                    <Icon name="sparkles" size={11} />
+                    Paling populer
+                  </span>
+                )}
+              </div>
+              <p class="flex items-baseline gap-1.5">
+                <span class="text-[26px] leading-none tracking-[-0.26px] text-ink">{formatRupiah(plan.monthly)}</span>
+                <span class="text-xs text-muted">/bulan</span>
+              </p>
+              <ul class="flex flex-1 flex-col gap-2">
+                {plan.features.slice(0, 4).map((feature) => (
+                  <li key={feature} class="flex items-center gap-2 text-[13px] tracking-[0.26px] text-ink">
+                    <Icon name="check" size={13} class="text-accent" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <ButtonLink
+                href={`${routes.subscription.index.href()}?paket=${id}`}
+                variant={featured ? 'default' : 'outline'}
+                class={featured ? undefined : 'bg-bg hover:bg-hover'}
+              >
+                {featured && <Icon name="sparkles" />}
+                {featured ? 'Upgrade ke Dapur Plus' : 'Pilih Keluarga'}
+              </ButtonLink>
+            </article>
+          )
+        })}
+      </div>
+      <p class="flex items-center gap-2 text-xs tracking-[0.24px] text-muted">
+        <Icon name="flask-conical" size={13} />
+        Pembayaran masih berupa simulasi — tidak ada tagihan sungguhan.
+      </p>
+      <ul class="flex flex-col gap-1.5">
+        <SettingsRow icon="credit-card" title="Metode pembayaran" description="Belum ada metode tersimpan." />
+        <SettingsRow icon="receipt-text" title="Riwayat tagihan" description="Belum ada tagihan." />
+      </ul>
+    </section>
+  )
 }
 
 /** Bio length allowed by the profile edit action. */
