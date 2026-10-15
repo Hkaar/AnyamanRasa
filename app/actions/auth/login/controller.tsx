@@ -18,8 +18,16 @@ export default createController(routes.auth.login, {
         ? 'Email terkonfirmasi. Silakan masuk.'
         : undefined
       let error = loginErrorMessage(context.url.searchParams.get('galat'))
+      // "Masuk dengan email ini" on the sign-up page carries the address over.
+      let email = text(context.url.searchParams.get('email'))
       return context.render(
-        <LoginPage shell={getShell(context)} redirectTo={redirectTo} notice={notice} errors={error ? { form: error } : {}} />,
+        <LoginPage
+          shell={getShell(context)}
+          redirectTo={redirectTo}
+          notice={notice}
+          values={email ? { email } : undefined}
+          errors={error ? { form: error } : {}}
+        />,
       )
     },
 
@@ -27,7 +35,7 @@ export default createController(routes.auth.login, {
       let login = text(context.formData.get('email'))
       let password = context.formData.get('password')
       let redirectTo = safeRedirectTarget(context.formData.get('ke'), routes.home.href())
-      let errors: { email?: string; password?: string; form?: string } = {}
+      let errors: { email?: string; password?: string; form?: string; formTitle?: string } = {}
       if (!login) errors.email = 'Email wajib diisi.'
       if (typeof password !== 'string' || password.length === 0) errors.password = 'Kata sandi wajib diisi.'
 
@@ -41,7 +49,13 @@ export default createController(routes.auth.login, {
       let email = await findEmailForLogin(context.db, login)
       let result = await getAuthProvider().signInWithPassword(email, password as string)
       if (!result.ok) {
-        errors.form = authErrorMessage(result.error)
+        if (result.error === 'invalid-credentials') {
+          errors.formTitle = authErrorMessage(result.error)
+          errors.form = 'Periksa lagi ejaannya. Huruf besar dan kecil pada kata sandi dibedakan.'
+          errors.password = 'Kata sandi tidak cocok dengan email ini.'
+        } else {
+          errors.form = authErrorMessage(result.error)
+        }
         return renderError()
       }
 

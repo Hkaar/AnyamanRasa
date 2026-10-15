@@ -44,6 +44,10 @@ describe('recipe editor', () => {
     assert.equal(response.status, 400)
     assert.match(html, /Judul resep wajib diisi/)
     assert.match(html, /Jumlah wajib diisi untuk Kangkung/)
+    assert.match(html, /Resepmu belum bisa disimpan/)
+    assert.match(html, /Perbaiki 2 isian yang ditandai merah/)
+    assert.match(html, /href="#judul"/)
+    assert.match(html, /Bahan 1/)
   })
 
   it('creates a recipe, adding unknown ingredients to the ingredient list', async () => {

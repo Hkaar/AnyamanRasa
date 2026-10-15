@@ -1,4 +1,4 @@
-import type { Handle } from 'remix/component'
+import type { Handle, RemixNode } from 'remix/component'
 
 import { AUTHOR_SORTS, type AuthorSort } from '../../data/recipes.ts'
 import type { Profile } from '../../data/users.ts'
@@ -6,20 +6,19 @@ import { formatMonthYear } from '../../domain/format.ts'
 import type { RecipeSummary } from '../../domain/types.ts'
 import type { FieldErrors } from '../../domain/validation.ts'
 import { routes } from '../../routes.ts'
-import { Icon } from '../../ui/icon.tsx'
+import { Icon, type IconName } from '../../ui/icon.tsx'
 import { SiteLayout } from '../../ui/layout.tsx'
 import { CsrfField } from '../../ui/primitives.tsx'
 import { RecipeCard } from '../../ui/recipe-card.tsx'
 import type { Shell } from '../../ui/shell.ts'
-import { Button, ButtonLink } from '../../ui/button.tsx'
+import { Button, ButtonLink, buttonVariants } from '../../ui/button.tsx'
 import { LoadMore, LoadMoreChunk } from '../../ui/load-more.tsx'
 import { Select } from '../../ui/select.tsx'
 import { checkboxClass, inputClass, textareaClass } from '../../ui/input.tsx'
-import { Field, fieldAttrs } from '../../ui/label.tsx'
+import { Field, FieldMessage, fieldAttrs, labelClass } from '../../ui/label.tsx'
 import { tabsListClass, tabsTriggerClass } from '../../ui/tabs.tsx'
 import { cn, pageX } from '../../ui/utils.ts'
 import { Avatar } from '../../ui/avatar.tsx'
-import { Breadcrumb } from '../../ui/breadcrumb.tsx'
 import { Empty } from '../../ui/empty.tsx'
 
 export type ProfileTab = 'resep' | 'variasi' | 'disimpan'
@@ -222,81 +221,254 @@ export function ProfilePage(handle: Handle<ProfilePageProps>) {
   }
 }
 
+const SETTINGS_SECTIONS = [
+  { id: 'profil-publik', label: 'Profil publik', icon: 'user-round' },
+  { id: 'akun', label: 'Akun', icon: 'shield-check' },
+] as const
+
+const settingsInput = 'h-12 bg-hover'
+
+/** pen.dev 09b "Pengaturan", limited to what the app stores: the public profile and the account. */
 export function ProfileEditPage(
   handle: Handle<{ shell: Shell; profile: Profile; errors?: FieldErrors<'name' | 'username' | 'bio' | 'location' | 'avatar'> }>,
 ) {
   return () => {
     let { shell, profile, errors = {} } = handle.props
+    let profileHref = routes.profile.show.href({ username: profile.username })
+    let errorCount = Object.keys(errors).length
     return (
-      <SiteLayout shell={shell} title="Pengaturan profil">
-        <div class={cn(pageX, 'flex flex-col gap-8 pt-8 pb-20 lg:pt-12')}>
-          <div class="flex flex-col gap-3 border-b border-line pb-8">
-            <Breadcrumb items={[{ label: 'Profil', href: routes.profile.show.href({ username: profile.username }) }, { label: 'Pengaturan' }]} />
-            <h1 class="text-[36px] leading-10 font-normal tracking-[-0.36px] text-ink lg:text-[52px] lg:leading-[57px] lg:tracking-[-0.52px]">
-              Pengaturan Profil
-            </h1>
-            <p class="text-base leading-6 tracking-[0.32px] text-muted">Atur bagaimana kamu tampil di resep dan variasi yang kamu terbitkan.</p>
+      <SiteLayout shell={shell} title="Pengaturan">
+        <div class={cn(pageX, 'flex flex-col gap-10 pt-8 pb-20 lg:gap-14 lg:pt-16 lg:pb-28')}>
+          <div class="flex flex-col gap-3">
+            <a href={profileHref} class="flex items-center gap-1.5 self-start text-[13px] tracking-[0.26px] text-muted hover:text-ink">
+              <Icon name="arrow-left" size={14} />
+              Kembali ke profil
+            </a>
+            <h1 class="text-[40px] leading-[1.1] font-normal tracking-[-0.4px] text-ink lg:text-[52px] lg:tracking-[-0.52px]">Pengaturan</h1>
+            <p class="text-[15px] leading-6 tracking-[0.3px] text-muted lg:text-base">
+              Atur bagaimana kamu tampil di resep dan variasi yang kamu terbitkan.
+            </p>
           </div>
-          <form
-            method="post"
-            action={routes.profile.edit.action.href()}
-            enctype="multipart/form-data"
-            class="flex max-w-[640px] flex-col gap-6"
-            novalidate
-          >
-            <CsrfField token={shell.csrfToken} />
-            <Field id="avatar" label="Foto profil" error={errors.avatar} help="JPG, PNG, atau WebP, maks. 4 MB.">
-              <div class="flex items-center gap-4">
-                <Avatar name={profile.name} src={profile.avatarUrl} size={64} />
-                <input
-                  {...fieldAttrs('avatar', errors.avatar)}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  class="text-sm tracking-[0.28px] file:mr-3 file:cursor-pointer file:rounded-sm file:border-0 file:bg-hover file:px-3 file:py-2 file:text-sm file:text-ink hover:file:bg-hover-strong"
-                />
-                {profile.avatarUrl && (
-                  <label class="flex items-center gap-2 text-[13px] tracking-[0.26px] text-muted">
-                    <input type="checkbox" name="hapus_avatar" value="1" class={checkboxClass} />
-                    Hapus foto
-                  </label>
-                )}
+
+          <div class="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
+            <nav aria-label="Bagian pengaturan" class="hidden lg:block">
+              <ul class="sticky top-24 flex flex-col gap-1">
+                {SETTINGS_SECTIONS.map((section, index) => (
+                  <li key={section.id}>
+                    <a
+                      href={`#${section.id}`}
+                      class={cn(
+                        'flex h-10 items-center gap-3 rounded-md px-3.5 text-sm tracking-[0.28px] transition-colors hover:bg-hover',
+                        index === 0 ? 'bg-hover font-medium text-ink' : 'text-muted hover:text-ink',
+                      )}
+                    >
+                      <Icon name={section.icon} size={16} />
+                      {section.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            <div class="flex min-w-0 flex-col gap-14 lg:gap-16">
+              <form
+                id="profil-form"
+                method="post"
+                action={routes.profile.edit.action.href()}
+                enctype="multipart/form-data"
+                data-track-changes
+                novalidate
+              >
+                <CsrfField token={shell.csrfToken} />
+                <section id="profil-publik" aria-labelledby="profil-publik-judul" class="flex scroll-mt-24 flex-col gap-6">
+                  <SettingsHeading
+                    id="profil-publik-judul"
+                    title="Profil publik"
+                    description="Informasi ini terlihat oleh semua orang di halaman profil dan resepmu."
+                  />
+                  {errorCount > 0 && (
+                    <p role="alert" class="flex items-center gap-2 rounded-md bg-error-subtle px-4 py-3 text-[13px] text-error">
+                      <Icon name="circle-alert" />
+                      {errorCount === 1 ? 'Ada 1 isian yang perlu diperbaiki.' : `Ada ${errorCount} isian yang perlu diperbaiki.`}
+                    </p>
+                  )}
+                  <div data-slot="field" data-invalid={errors.avatar ? 'true' : undefined} class="flex flex-col gap-1.5">
+                    <div
+                      class={cn(
+                        'flex flex-col gap-4 rounded-lg p-5 sm:flex-row sm:items-center',
+                        errors.avatar ? 'bg-error-subtle' : 'bg-subtle',
+                      )}
+                    >
+                      <div class="flex flex-1 items-center gap-5">
+                        <Avatar name={profile.name} src={profile.avatarUrl} size={80} class="border-0" />
+                        <div class="flex flex-col gap-1">
+                          <span id="avatar-label" class="text-[15px] font-medium text-ink">Foto profil</span>
+                          <span id="avatar-name" class="text-[13px] tracking-[0.26px] text-muted" data-file-name-for="avatar">
+                            JPG, PNG, atau WebP, maks. 4 MB.
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <label
+                          class={cn(
+                            buttonVariants({ variant: 'outline', size: 'lg' }),
+                            'cursor-pointer bg-bg hover:bg-hover focus-within:ring-[3px] focus-within:ring-focus-ring',
+                          )}
+                        >
+                          <Icon name="upload" />
+                          Ganti foto
+                          <input
+                            {...fieldAttrs('avatar', errors.avatar)}
+                            aria-labelledby="avatar-label avatar-name"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            class="sr-only"
+                          />
+                        </label>
+                        {profile.avatarUrl && (
+                          <label class={cn(buttonVariants({ variant: 'ghost', size: 'lg' }), 'cursor-pointer text-muted has-checked:bg-error-subtle has-checked:text-error')}>
+                            <input type="checkbox" name="hapus_avatar" value="1" class={checkboxClass} />
+                            Hapus
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    <FieldMessage id="avatar-help" error={errors.avatar} />
+                  </div>
+                  <div class="grid gap-6 sm:grid-cols-2">
+                    <Field id="name" label="Nama tampilan" error={errors.name}>
+                      <input
+                        {...fieldAttrs('name', errors.name)}
+                        type="text"
+                        required
+                        maxLength={100}
+                        defaultValue={profile.name}
+                        class={cn(inputClass, settingsInput)}
+                      />
+                    </Field>
+                    <Field
+                      id="username"
+                      label="Nama pengguna"
+                      error={errors.username}
+                      help={`Huruf kecil, angka, atau garis bawah. Profilmu ada di /u/${profile.username}.`}
+                    >
+                      <input
+                        {...fieldAttrs('username', errors.username)}
+                        type="text"
+                        required
+                        autocapitalize="none"
+                        pattern="[a-z0-9_]{3,30}"
+                        defaultValue={profile.username}
+                        class={cn(inputClass, settingsInput)}
+                      />
+                    </Field>
+                  </div>
+                  <div data-slot="field" data-invalid={errors.bio ? 'true' : undefined} class="flex flex-col gap-1.5">
+                    <label for="bio" class={cn(labelClass, errors.bio && 'text-error')}>
+                      Bio
+                    </label>
+                    <textarea
+                      {...fieldAttrs('bio', errors.bio)}
+                      rows={4}
+                      maxLength={BIO_LIMIT}
+                      data-char-count="bio-count"
+                      class={cn(textareaClass, 'bg-hover')}
+                      defaultValue={profile.bio}
+                    />
+                    <div class="flex items-start justify-between gap-4">
+                      <FieldMessage id="bio-help" error={errors.bio}>
+                        Ceritakan gaya masakmu dalam satu-dua kalimat.
+                      </FieldMessage>
+                      <span id="bio-count" class="ml-auto shrink-0 text-xs tracking-[0.24px] text-faint tabular-nums">
+                        {profile.bio.length} / {BIO_LIMIT}
+                      </span>
+                    </div>
+                  </div>
+                  <Field id="location" label="Kota" error={errors.location} class="sm:max-w-[calc(50%-12px)]">
+                    <input
+                      {...fieldAttrs('location', errors.location)}
+                      type="text"
+                      maxLength={100}
+                      defaultValue={profile.location}
+                      class={cn(inputClass, settingsInput)}
+                      placeholder="misal: Yogyakarta"
+                    />
+                  </Field>
+                </section>
+              </form>
+
+              <section id="akun" aria-labelledby="akun-judul" class="flex scroll-mt-24 flex-col gap-6">
+                <SettingsHeading id="akun-judul" title="Akun" description="Cara kamu masuk ke AnyamanRasa." />
+                <ul class="flex flex-col gap-1.5">
+                  <SettingsRow icon="mail" title="Email" description={`${profile.email} · dipakai untuk masuk.`} />
+                  <SettingsRow
+                    icon="log-out"
+                    title="Sesi ini"
+                    description="Keluar dari AnyamanRasa di perangkat ini."
+                    action={
+                      <Button type="submit" form="keluar-form" variant="outline" class="bg-bg hover:bg-hover">
+                        Keluar
+                      </Button>
+                    }
+                  />
+                </ul>
+                <form id="keluar-form" method="post" action={routes.auth.logout.href()} hidden>
+                  <CsrfField token={shell.csrfToken} />
+                </form>
+              </section>
+
+              <div
+                data-changes-bar
+                class="group sticky bottom-4 z-20 flex flex-col gap-3 rounded-lg bg-surface-dark p-3 pl-5 text-white shadow-modal sm:flex-row sm:items-center"
+              >
+                <p class="flex flex-1 items-center gap-3 text-sm tracking-[0.28px]" aria-live="polite">
+                  <span class="size-2 shrink-0 rounded-full bg-white/30 group-data-dirty:bg-peach" data-changes-dot aria-hidden="true" />
+                  <span data-changes-label="profil-form">Simpan setelah selesai mengubah profilmu.</span>
+                </p>
+                <div class="flex items-center gap-2">
+                  <a href={profileHref} class="flex h-11 items-center rounded-sm px-4 text-[15px] text-white/85 hover:bg-white/10 hover:text-white">
+                    Batalkan
+                  </a>
+                  <Button type="submit" form="profil-form" variant="default" size="lg" class="flex-1 sm:flex-none">
+                    Simpan perubahan
+                  </Button>
+                </div>
               </div>
-            </Field>
-            <div class="grid gap-6 sm:grid-cols-2">
-              <Field id="name" label="Nama tampilan" error={errors.name}>
-                <input {...fieldAttrs('name', errors.name)} type="text" required maxLength={100} defaultValue={profile.name} class={inputClass} />
-              </Field>
-              <Field id="username" label="Nama pengguna" error={errors.username} help="Huruf kecil, angka, atau garis bawah.">
-                <input
-                  {...fieldAttrs('username', errors.username)}
-                  type="text"
-                  required
-                  autocapitalize="none"
-                  pattern="[a-z0-9_]{3,30}"
-                  defaultValue={profile.username}
-                  class={inputClass}
-                />
-              </Field>
             </div>
-            <Field id="location" label="Kota" error={errors.location}>
-              <input {...fieldAttrs('location', errors.location)} type="text" maxLength={100} defaultValue={profile.location} class={inputClass} placeholder="misal: Yogyakarta" />
-            </Field>
-            <Field id="bio" label="Bio" error={errors.bio} help="Maksimal 280 karakter.">
-              <textarea {...fieldAttrs('bio', errors.bio)} rows={4} maxLength={280} class={textareaClass} defaultValue={profile.bio} />
-            </Field>
-            <div class="flex gap-2">
-              <Button type="submit" variant="default" size="lg">
-                Simpan perubahan
-              </Button>
-              <ButtonLink href={routes.profile.show.href({ username: profile.username })} variant="outline" size="lg">
-                Batal
-              </ButtonLink>
-            </div>
-          </form>
+          </div>
         </div>
       </SiteLayout>
     )
   }
+}
+
+/** Bio length allowed by the profile edit action. */
+export const BIO_LIMIT = 280
+
+function SettingsHeading(handle: Handle<{ id: string; title: string; description: string }>) {
+  return () => (
+    <div class="flex flex-col gap-1.5">
+      <h2 id={handle.props.id} class="text-2xl leading-[1.2] font-normal tracking-[-0.24px] text-ink">
+        {handle.props.title}
+      </h2>
+      <p class="text-sm leading-[22px] tracking-[0.28px] text-muted">{handle.props.description}</p>
+    </div>
+  )
+}
+
+function SettingsRow(handle: Handle<{ icon: IconName; title: string; description: string; action?: RemixNode }>) {
+  return () => (
+    <li class="flex items-center gap-4 rounded-md bg-subtle px-4 py-3.5">
+      <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-hover text-ink" aria-hidden="true">
+        <Icon name={handle.props.icon} size={16} />
+      </span>
+      <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+        <p class="text-sm font-medium tracking-[0.28px] text-ink">{handle.props.title}</p>
+        <p class="truncate text-[13px] tracking-[0.26px] text-muted">{handle.props.description}</p>
+      </div>
+      {handle.props.action}
+    </li>
+  )
 }
 
 function ProfileRecipeCard(handle: Handle<{ recipe: RecipeSummary; tab: ProfileTab }>) {

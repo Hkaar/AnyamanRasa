@@ -20,7 +20,16 @@ describe('recipe discovery', () => {
   it('shows an empty state with the active filters', async () => {
     let html = await (await createClient().get('/resep?q=rendang%20jengkol&durasi=15')).text()
     assert.match(html, /Tidak ada resep yang cocok/)
+    assert.match(html, /Belum ada resep “rendang jengkol” dengan filter ini/)
+    assert.match(html, /Hapus semua filter/)
     assert.match(html, /≤\s15\smenit/)
+  })
+
+  it('renders placeholder cards for the loading state alongside the results', async () => {
+    let html = await (await createClient().get('/resep')).text()
+    assert.match(html, /data-results/)
+    assert.match(html, /data-results-count/)
+    assert.match(html, /group-data-loading\/results:grid/)
   })
 
   it('serves the next page of cards as a fragment for infinite scroll', async () => {

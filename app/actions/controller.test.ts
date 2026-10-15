@@ -20,7 +20,13 @@ describe('root controller', () => {
   it('returns a 404 page for unknown routes inside an area', async () => {
     let response = await createClient().get('/resep/bukan-uuid')
     assert.equal(response.status, 404)
-    assert.match(await response.text(), /Halaman tidak ditemukan|tidak ada/)
+    assert.match(await response.text(), /Resep ini sudah tidak tersedia/)
+  })
+
+  it('returns the designed 404 page for URLs no route matches', async () => {
+    let response = await createClient().get('/halaman-yang-tidak-ada')
+    assert.equal(response.status, 404)
+    assert.match(await response.text(), /Halaman ini tidak ada di dapur kami/)
   })
 
   it('serves scripts to signed-in users without querying the database', async () => {

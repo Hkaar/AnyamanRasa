@@ -103,10 +103,56 @@ function syncBlendingHeader() {
 }
 window.addEventListener('scroll', syncBlendingHeader, { passive: true })
 
+// Settings form (profile/pages.tsx): live character counts, the chosen photo's file name, and
+// the save bar's count of unsaved changes.
+document.addEventListener('input', (event) => {
+  let field = event.target
+  if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return
+  let counter = field.dataset.charCount && document.getElementById(field.dataset.charCount)
+  if (counter) counter.textContent = `${field.value.length} / ${field.maxLength}`
+  if (field.form?.hasAttribute('data-track-changes')) syncChanges(field.form)
+})
+document.addEventListener('change', (event) => {
+  let field = event.target
+  if (!(field instanceof HTMLInputElement) || !field.form?.hasAttribute('data-track-changes')) return
+  let name = document.querySelector(`[data-file-name-for="${field.id}"]`)
+  if (name && field.type === 'file' && field.files?.[0]) name.textContent = field.files[0].name
+  syncChanges(field.form)
+})
+
+function syncChanges(form: HTMLFormElement) {
+  let changed = 0
+  for (let element of form.elements) {
+    if (element instanceof HTMLTextAreaElement) changed += Number(element.value !== element.defaultValue)
+    if (!(element instanceof HTMLInputElement) || element.type === 'hidden') continue
+    if (element.type === 'file') changed += Number((element.files?.length ?? 0) > 0)
+    else if (element.type === 'checkbox') changed += Number(element.checked !== element.defaultChecked)
+    else changed += Number(element.value !== element.defaultValue)
+  }
+  let label = document.querySelector(`[data-changes-label="${form.id}"]`)
+  if (label) label.textContent = changed > 0 ? `Ada ${changed} perubahan yang belum disimpan` : 'Belum ada perubahan'
+  label?.closest('[data-changes-bar]')?.toggleAttribute('data-dirty', changed > 0)
+}
+
+// Offline banner (layout.tsx, pen.dev 12c): follows the browser's connection state. "Sambungkan
+// lagi" reloads once the connection is back; until then it only re-checks.
+function syncOfflineBanner() {
+  let banner = document.querySelector<HTMLElement>('[data-offline-banner]')
+  if (banner) banner.hidden = navigator.onLine
+}
+window.addEventListener('online', syncOfflineBanner)
+window.addEventListener('offline', syncOfflineBanner)
+document.addEventListener('click', (event) => {
+  if (!(event.target as Element | null)?.closest('[data-offline-retry]')) return
+  if (navigator.onLine) location.reload()
+  else syncOfflineBanner()
+})
+
 // Per-page setup: on the first load, and after each client-side navigation (Remix swaps the
 // page in place through the Navigation API, so no new document or `load` event happens).
 function initPage() {
   syncBlendingHeader()
+  syncOfflineBanner()
   initPageMotion()
   initLoadMore()
 }

@@ -19,6 +19,7 @@ import { Icon } from '../../../ui/icon.tsx'
 import { iconData } from '../../../ui/icon-data.ts'
 import { MetaItem } from '../../../ui/primitives.tsx'
 import { Select } from '../../../ui/select.tsx'
+import { StatusMessage } from '../../../ui/status.tsx'
 import { Tooltip } from '../../../ui/tooltip.tsx'
 import { enter, prefersReducedMotion } from '../../public/motion.ts'
 import { startAtmosphere } from './graph-atmosphere.ts'
@@ -162,7 +163,7 @@ export const GraphExplorer = clientEntry(
       } catch (cause) {
         if ((cause as Error).name === 'AbortError') return
         loading = false
-        error = 'Graf gagal dimuat. Periksa koneksi lalu coba lagi.'
+        error = 'Koneksi terputus saat mengambil hubungan resep. Coba lagi sebentar.'
         handle.update()
       }
     }
@@ -305,7 +306,7 @@ export const GraphExplorer = clientEntry(
       try {
         renderGraph()
       } catch (cause) {
-        error = 'Graf gagal digambar. Gunakan tampilan Daftar.'
+        error = 'Graf tidak bisa digambar di peramban ini. Hubungan resepnya tetap bisa kamu lihat sebagai daftar.'
         console.error(cause)
       }
       cy.on('tap', 'node', (event) => select(event.target.id() as NodeKey))
@@ -345,7 +346,7 @@ export const GraphExplorer = clientEntry(
       try {
         mount(container, handle.signal)
       } catch (cause) {
-        error = 'Graf gagal dimuat. Gunakan tampilan Daftar.'
+        error = 'Graf tidak bisa digambar di peramban ini. Hubungan resepnya tetap bisa kamu lihat sebagai daftar.'
         console.error(cause)
         handle.update()
       }
@@ -694,12 +695,35 @@ export const GraphExplorer = clientEntry(
                   Ditampilkan {nodeCount} simpul terdekat
                 </p>
               )}
-              {(loading || error || !cy) && (
-                <div class="absolute inset-0 flex items-center justify-center bg-subtle/70" aria-live="polite">
-                  <p class="rounded-md border border-line bg-bg px-4 py-2.5 text-sm text-muted">
-                    {error ?? 'Memuat graf…'}
-                  </p>
+              {error ? (
+                // pen.dev 12f: the canvas gives way to one message, a retry and the list view.
+                <div role="alert" class="absolute inset-0 z-10 flex items-center justify-center bg-subtle px-5">
+                  <StatusMessage
+                    icon="unplug"
+                    title="Graf belum bisa dimuat."
+                    description={error}
+                    action={
+                      <Button
+                        variant="dark"
+                        size="lg"
+                        mix={on('click', () => (cy ? load({}, false) : location.reload()))}
+                      >
+                        <Icon name="rotate-cw" />
+                        Coba lagi
+                      </Button>
+                    }
+                    link={{
+                      href: `${routes.graph.index.href()}?${graphQuery({ ...state, view: 'daftar' })}`,
+                      label: 'Lihat sebagai daftar',
+                    }}
+                  />
                 </div>
+              ) : (
+                (loading || !cy) && (
+                  <div class="absolute inset-0 flex items-center justify-center bg-subtle/70" aria-live="polite">
+                    <p class="rounded-md bg-bg px-4 py-2.5 text-sm text-muted">Memuat graf…</p>
+                  </div>
+                )
               )}
             </div>
 

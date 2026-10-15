@@ -4,6 +4,7 @@ import { createController } from 'remix/router'
 import { createRecipe, getRecipe, listCategories } from '../../../data/recipes.ts'
 import { routes } from '../../../routes.ts'
 import { getShell, notFound, requireViewer, setFlash } from '../../shell.tsx'
+import { RECIPE_NOT_FOUND } from '../../../ui/error-page.tsx'
 import { RecipeEditorPage } from '../editor/page.tsx'
 import { categoryIdsFor, flashFor, processSubmission, valuesFromRecipe } from '../editor/submission.ts'
 
@@ -13,7 +14,7 @@ export default createController(routes.recipes.variation, {
       let viewer = requireViewer(context)
       if (viewer instanceof Response) return viewer
       let parent = await getRecipe(context.db, context.params.id)
-      if (!parent || parent.status !== 'published') return notFound(context, 'Resep sumber tidak ditemukan.')
+      if (!parent || parent.status !== 'published') return notFound(context, RECIPE_NOT_FOUND)
       return context.render(
         <RecipeEditorPage
           shell={getShell(context)}
@@ -30,7 +31,7 @@ export default createController(routes.recipes.variation, {
       let viewer = requireViewer(context)
       if (viewer instanceof Response) return viewer
       let parent = await getRecipe(context.db, context.params.id)
-      if (!parent || parent.status !== 'published') return notFound(context, 'Resep sumber tidak ditemukan.')
+      if (!parent || parent.status !== 'published') return notFound(context, RECIPE_NOT_FOUND)
 
       let result = await processSubmission(context, true)
       if (!result.ok) {

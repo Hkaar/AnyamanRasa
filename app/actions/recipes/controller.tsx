@@ -16,6 +16,7 @@ import {
 import { diffIngredients } from '../../domain/lineage.ts'
 import { routes } from '../../routes.ts'
 import { getShell, notFound, requireViewer, safeRedirectTarget, setFlash } from '../shell.tsx'
+import { RECIPE_NOT_FOUND } from '../../ui/error-page.tsx'
 import { parseRecipeFilters } from './filters.ts'
 import { RecipeCardsChunk, RecipeIndexPage } from './index-page.tsx'
 import { RecipeShowPage } from './show-page.tsx'
@@ -56,7 +57,7 @@ export default createController(routes.recipes, {
         (recipe.status === 'draft' && !isOwner) ||
         (recipe.status === 'archived' && !isOwner && !viewer?.isAdmin)
       ) {
-        return notFound(context, 'Resep ini tidak ada atau belum diterbitkan.')
+        return notFound(context, RECIPE_NOT_FOUND)
       }
 
       let [variations, relations, related, saved, parentIngredients] = await Promise.all([
@@ -91,7 +92,7 @@ export default createController(routes.recipes, {
       let viewer = requireViewer(context)
       if (viewer instanceof Response) return viewer
       let owner = await getRecipeOwner(context.db, context.params.id)
-      if (!owner || owner.status !== 'published') return notFound(context)
+      if (!owner || owner.status !== 'published') return notFound(context, RECIPE_NOT_FOUND)
 
       let save = context.formData.get('simpan') !== '0'
       await setRecipeSaved(context.db, viewer.id, context.params.id, save)

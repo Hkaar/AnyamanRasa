@@ -25,6 +25,7 @@ import { sessionMiddleware } from './middleware/session.ts'
 import { loadViewer } from './middleware/viewer.ts'
 import { routes } from './routes.ts'
 import { MAX_UPLOAD_BYTES, serveMedia } from './data/media.ts'
+import { notFound } from './actions/shell.tsx'
 
 /**
  * Compiled scripts and uploaded photos need no session, CSRF check or signed-in user, so
@@ -81,9 +82,12 @@ function handleErrors(): Middleware {
 }
 
 function errorPage(database: boolean): string {
+  // pen.dev 12b. No SiteLayout here (it needs the database), so the logo stands in for the nav.
   let message = database
-    ? 'Server sedang sibuk menyiapkan dapur. Coba muat ulang halaman ini sebentar lagi.'
-    : 'Terjadi kesalahan di sisi kami. Coba muat ulang halaman ini, atau kembali ke beranda.'
+    ? 'Server sedang sibuk menyiapkan dapur. Coba lagi dalam beberapa saat.'
+    : 'Ada gangguan di sisi kami. Coba lagi dalam beberapa saat.'
+  let icon = (paths: string) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`
   return `<!doctype html>
 <html lang="id">
   <head>
@@ -93,18 +97,36 @@ function errorPage(database: boolean): string {
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
-    <main class="flex min-h-dvh flex-col items-center justify-center gap-5 px-5 py-24 text-center">
-      <img src="/logo.png" alt="AnyamanRasa" width="34" height="28" />
-      <h1 class="text-[36px] leading-10 font-normal tracking-[-0.36px] text-ink">Ada yang tidak beres</h1>
-      <p class="max-w-md text-base leading-6 text-muted">${message}</p>
-      <div class="flex gap-2">
-        <a href="" class="inline-flex h-11 items-center rounded-sm bg-accent px-4 text-[15px] text-white hover:bg-accent-strong">Muat ulang</a>
-        <a href="/" class="inline-flex h-11 items-center rounded-sm bg-hover px-4 text-[15px] text-ink hover:bg-hover-strong">Ke Beranda</a>
+  <body class="bg-bg text-ink">
+    <header class="border-b border-line">
+      <a href="/" class="mx-auto flex h-[72px] max-w-[1440px] items-center gap-2.5 px-5 text-[17px] font-medium md:px-10 xl:px-[120px]">
+        <img src="/logo.png" alt="" width="34" height="28" />
+        AnyamanRasa
+      </a>
+    </header>
+    <main class="flex min-h-[calc(100dvh-73px)] flex-col items-center justify-center gap-5 px-5 py-24 text-center lg:gap-7">
+      <span class="rounded-full bg-[linear-gradient(135deg,var(--color-peach),var(--color-pink)_60%,var(--color-lilac))] px-[18px] py-2 font-mono text-[13px] leading-none tracking-[1px]">${database ? 503 : 500}</span>
+      <h1 class="max-w-[760px] text-[44px] leading-[1.05] font-normal tracking-[-0.9px] text-balance lg:text-[72px] lg:tracking-[-1.8px]">Dapur kami sedang kewalahan.</h1>
+      <p class="max-w-[620px] text-base leading-6 tracking-[0.2px] text-muted lg:text-lg lg:leading-7">${message}</p>
+      <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 pt-1">
+        <a href="" class="inline-flex h-11 items-center gap-2 rounded-sm bg-surface-dark px-4 text-[15px] text-white hover:bg-ink lg:h-[46px] lg:px-5">${icon('<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>')}Coba lagi</a>
+        <a href="/" class="inline-flex items-center gap-1.5 text-[15px] underline-offset-4 hover:underline">Kembali ke Beranda${icon('<path d="M7 7h10v10"/><path d="M7 17 17 7"/>')}</a>
       </div>
     </main>
   </body>
 </html>`
+}
+
+/** URLs no route matches get the designed 404 page (pen.dev 12a) instead of the router's plain text. */
+function pageNotFound(): Middleware {
+  return async (context, next) => {
+    let response = await next()
+    let html = response.headers.get('Content-Type')?.includes('text/html')
+    if (response.status !== 404 || html || context.request.method !== 'GET') return response
+    if (context.url.pathname.startsWith('/api/')) return response
+    // Runs after render() and loadViewer(), so the page gets the usual layout and signed-in user.
+    return notFound(context as unknown as AppContext)
+  }
 }
 
 const IMMUTABLE = 'public, max-age=31536000, s-maxage=31536000, immutable'
@@ -121,6 +143,7 @@ const middleware = createMiddleware(
   loadDatabase(),
   loadViewer(),
   render({ assets }),
+  pageNotFound(),
 )
 
 export type AppContext = MiddlewareContext<typeof middleware>

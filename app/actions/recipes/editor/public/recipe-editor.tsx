@@ -262,6 +262,14 @@ export const RecipeEditor = clientEntry(
         terbitkan: false,
       }
       done.terbitkan = done.informasi && done.bahan && done.langkah && failing === 0
+      // Sections the server rejected stay marked until they are complete (pen.dev 12i).
+      let { ingredients: ingredientsError, steps: stepsError, ...infoErrors } = fieldError
+      let rejected: Record<SectionId, boolean> = {
+        informasi: Object.values(infoErrors).some(Boolean),
+        bahan: Boolean(ingredientsError) || Object.keys(errors.ingredientRows).length > 0,
+        langkah: Boolean(stepsError) || Object.keys(errors.stepRows).length > 0,
+        terbitkan: false,
+      }
 
       return (
         <div class="grid gap-10 lg:grid-cols-[232px_minmax(0,896px)] lg:justify-between lg:gap-18">
@@ -272,6 +280,7 @@ export const RecipeEditor = clientEntry(
                 {SECTIONS.map((section, index) => {
                   let isActive = active === section.id
                   let isDone = done[section.id]
+                  let isRejected = rejected[section.id] && !isDone
                   return (
                     <li key={section.id}>
                       <a
@@ -279,23 +288,38 @@ export const RecipeEditor = clientEntry(
                         aria-current={isActive ? 'location' : undefined}
                         class={cn(
                           'flex h-9 items-center gap-2.5 rounded-full px-2.5 text-sm font-medium tracking-[0.02em] transition-colors',
-                          isActive ? 'bg-ink text-white' : isDone ? 'text-ink hover:bg-hover' : 'text-muted hover:bg-hover hover:text-ink',
+                          isActive
+                            ? 'bg-ink text-white'
+                            : isRejected
+                              ? 'text-error hover:bg-error-subtle'
+                              : isDone
+                                ? 'text-ink hover:bg-hover'
+                                : 'text-muted hover:bg-hover hover:text-ink',
                         )}
                       >
                         <span
                           class={cn(
                             'flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium',
-                            isDone
-                              ? 'bg-accent text-white'
-                              : isActive
-                                ? 'border border-white bg-bg text-ink'
-                                : 'border border-line-strong bg-bg text-muted',
+                            isRejected
+                              ? 'bg-error text-white'
+                              : isDone
+                                ? 'bg-accent text-white'
+                                : isActive
+                                  ? 'border border-white bg-bg text-ink'
+                                  : 'border border-line-strong bg-bg text-muted',
                           )}
                         >
-                          {isDone ? <Icon name="check" size={12} strokeWidth={2.5} /> : index + 1}
+                          {isRejected ? (
+                            <Icon name="x" size={12} strokeWidth={2.5} />
+                          ) : isDone ? (
+                            <Icon name="check" size={12} strokeWidth={2.5} />
+                          ) : (
+                            index + 1
+                          )}
                         </span>
                         {section.label}
                         {isDone && <span class="sr-only">(lengkap)</span>}
+                        {isRejected && <span class="sr-only">(perlu diperbaiki)</span>}
                       </a>
                     </li>
                   )

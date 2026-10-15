@@ -1,6 +1,7 @@
 import type { Handle, RemixNode } from 'remix/component'
 
 import { routes } from '../../routes.ts'
+import { authErrorMessage } from '../../data/auth-provider.ts'
 import { Document } from '../../ui/document.tsx'
 import { Icon } from '../../ui/icon.tsx'
 import { CsrfField, Logo } from '../../ui/primitives.tsx'
@@ -249,27 +250,37 @@ function Divider() {
   )
 }
 
-function FormAlert(handle: Handle<{ message: string; tone?: 'error' | 'info' }>) {
-  return () => (
-    <p
-      role={handle.props.tone === 'info' ? 'status' : 'alert'}
-      class={
-        handle.props.tone === 'info'
-          ? 'flex items-center gap-2 rounded-md bg-accent-subtle px-3.5 py-3 text-[13px] text-accent-strong'
-          : 'flex items-center gap-2 rounded-md bg-error-subtle px-3.5 py-3 text-[13px] text-error'
-      }
-    >
-      <Icon name={handle.props.tone === 'info' ? 'circle-check' : 'circle-alert'} />
-      {handle.props.message}
-    </p>
-  )
+/** A message at the top of an auth form (pen.dev 12g/12h); with a title, the message reads as its detail. */
+function FormAlert(handle: Handle<{ message: string; title?: string; tone?: 'error' | 'info' }>) {
+  return () => {
+    let { message, title, tone = 'error' } = handle.props
+    return (
+      <div
+        role={tone === 'info' ? 'status' : 'alert'}
+        class={cn(
+          'flex items-start gap-2.5 rounded-md px-4 py-3.5 text-[13px] leading-5 tracking-[0.26px]',
+          tone === 'info' ? 'bg-accent-subtle text-accent-strong' : 'bg-error-subtle text-error',
+        )}
+      >
+        <Icon name={tone === 'info' ? 'circle-check' : 'circle-alert'} size={16} class="mt-0.5" />
+        {title ? (
+          <div class="flex flex-col gap-1">
+            <p class="text-sm font-medium">{title}</p>
+            <p class="text-ink">{message}</p>
+          </div>
+        ) : (
+          <p class={tone === 'error' ? 'text-ink' : undefined}>{message}</p>
+        )}
+      </div>
+    )
+  }
 }
 
 export interface LoginPageProps {
   shell: Shell
   redirectTo: string
   values?: { email: string }
-  errors?: { email?: string; password?: string; form?: string }
+  errors?: { email?: string; password?: string; form?: string; formTitle?: string }
   notice?: string
 }
 
@@ -293,7 +304,7 @@ export function LoginPage(handle: Handle<LoginPageProps>) {
             </p>
           </div>
           {notice && <FormAlert message={notice} tone="info" />}
-          {errors.form && <FormAlert message={errors.form} />}
+          {errors.form && <FormAlert title={errors.formTitle} message={errors.form} />}
           <GoogleButton shell={shell} label="Masuk dengan Google" redirectTo={redirectTo} />
           <Divider />
           <form method="post" action={routes.auth.login.action.href()} class="flex flex-1 flex-col gap-7 lg:gap-8" novalidate>
@@ -407,6 +418,8 @@ function RegisterMethods(handle: Handle<{ shell: Shell; error?: string }>) {
 function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'values' | 'errors'>>) {
   return () => {
     let { shell, values, errors = {} } = handle.props
+    let fieldErrorCount = [errors.username, errors.email, errors.password, errors.confirm].filter(Boolean).length
+    let emailTaken = errors.email === authErrorMessage('email-taken')
     return (
       <div class="flex flex-col gap-7">
         <a
@@ -420,7 +433,19 @@ function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'val
           <h1 class={headingClass}>Daftar dengan email</h1>
           <p class={leadClass}>Isi data di bawah untuk membuat akun AnyamanRasa-mu.</p>
         </div>
-        {errors.form && <FormAlert message={errors.form} />}
+        {errors.form ? (
+          <FormAlert message={errors.form} />
+        ) : (
+          fieldErrorCount > 0 && (
+            <FormAlert
+              message={
+                fieldErrorCount === 1
+                  ? 'Ada 1 hal yang perlu diperbaiki sebelum akunmu dibuat.'
+                  : `Ada ${fieldErrorCount} hal yang perlu diperbaiki sebelum akunmu dibuat.`
+              }
+            />
+          )
+        )}
         <form method="post" action={routes.auth.register.action.href()} class="flex flex-col gap-7" novalidate>
           <CsrfField token={shell.csrfToken} />
           <div class="flex flex-col gap-[18px]">
@@ -439,6 +464,15 @@ function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'val
                 defaultValue={values?.email ?? ''}
                 class={cn(inputClass, authInputClass, 'h-12 lg:h-11')}
               />
+              {emailTaken && (
+                <a
+                  href={`${routes.auth.login.index.href()}?${new URLSearchParams({ email: values?.email ?? '' })}`}
+                  class="flex items-center gap-1 self-start pt-1 text-[13px] font-medium tracking-[0.26px] text-accent-strong hover:underline"
+                >
+                  Masuk dengan email ini
+                  <Icon name="arrow-right" size={14} />
+                </a>
+              )}
             </Field>
             <div class="flex flex-col gap-1.5" data-invalid={errors.password ? 'true' : undefined}>
               <label for="password" class={labelClass}>

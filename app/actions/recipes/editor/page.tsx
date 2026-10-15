@@ -2,7 +2,7 @@ import type { Handle } from 'remix/component'
 
 import type { Category } from '../../../data/recipes.ts'
 import { difficultyLabel, formatMinutes } from '../../../domain/format.ts'
-import { emptyRecipeErrors, type RecipeFormErrors, type RecipeFormValues } from '../../../domain/recipe-form.ts'
+import { emptyRecipeErrors, type RecipeFormErrors, type RecipeFormField, type RecipeFormValues } from '../../../domain/recipe-form.ts'
 import type { RecipeDetail } from '../../../domain/types.ts'
 import { routes } from '../../../routes.ts'
 import { Icon } from '../../../ui/icon.tsx'
@@ -54,8 +54,7 @@ export function RecipeEditorPage(handle: Handle<RecipeEditorPageProps>) {
   return () => {
     let { shell, mode, values, errors = emptyRecipeErrors(), categories, action, recipe, parent } = handle.props
     let copy = COPY[mode]
-    let hasErrors =
-      Object.keys(errors.fields).length + Object.keys(errors.ingredientRows).length + Object.keys(errors.stepRows).length > 0
+    let problems = errorLinks(errors)
     let isVariation = mode === 'variation' || Boolean(recipe?.parent)
 
     let crumbs =
@@ -94,11 +93,34 @@ export function RecipeEditorPage(handle: Handle<RecipeEditorPageProps>) {
             </div>
           </header>
 
-          {hasErrors && (
-            <p role="alert" class="flex items-center gap-2 rounded-md bg-error-subtle px-4 py-3 text-sm text-error">
-              <Icon name="circle-alert" />
-              Ada isian yang perlu diperbaiki. Periksa bagian yang ditandai merah.
-            </p>
+          {problems.length > 0 && (
+            // pen.dev 12i: what to fix, with a jump link to each field.
+            <div role="alert" class="flex flex-col gap-4 rounded-lg bg-error-subtle p-5 lg:flex-row lg:items-center lg:justify-between lg:px-5">
+              <div class="flex items-start gap-3.5">
+                <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-bg/70 text-error">
+                  <Icon name="circle-alert" size={18} />
+                </span>
+                <div class="flex flex-col gap-0.5 tracking-[0.02em]">
+                  <p class="text-[15px] font-medium text-error">Resepmu belum bisa disimpan</p>
+                  <p class="text-[13px] leading-5 text-ink">
+                    Perbaiki {problems.length} isian yang ditandai merah, lalu kirim lagi.
+                  </p>
+                </div>
+              </div>
+              <ul class="flex flex-wrap gap-2 pl-[50px] lg:justify-end lg:pl-0" aria-label="Isian yang perlu diperbaiki">
+                {problems.map((problem) => (
+                  <li key={problem.label}>
+                    <a
+                      href={problem.href}
+                      class="flex h-8 items-center gap-1.5 rounded-sm bg-bg px-3 text-xs font-medium tracking-[0.02em] text-error transition-colors hover:bg-white/60"
+                    >
+                      {problem.label}
+                      <Icon name="arrow-down" size={13} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           <RecipeEditor
@@ -126,4 +148,30 @@ export function RecipeEditorPage(handle: Handle<RecipeEditorPageProps>) {
       </SiteLayout>
     )
   }
+}
+
+const FIELD_LINKS: Record<RecipeFormField, { label: string; href: string }> = {
+  title: { label: 'Judul resep', href: '#judul' },
+  changeSummary: { label: 'Perubahan', href: '#perubahan' },
+  description: { label: 'Deskripsi', href: '#deskripsi' },
+  image: { label: 'Foto masakan', href: '#foto-label' },
+  prepMinutes: { label: 'Waktu persiapan', href: '#persiapan' },
+  cookMinutes: { label: 'Waktu memasak', href: '#memasak' },
+  servings: { label: 'Porsi', href: '#porsi' },
+  difficulty: { label: 'Kesulitan', href: '#informasi' },
+  categoryIds: { label: 'Kategori', href: '#kategori-help' },
+  ingredients: { label: 'Bahan', href: '#bahan' },
+  steps: { label: 'Langkah', href: '#langkah' },
+}
+
+/** One jump link per field or row the server rejected, in form order. */
+function errorLinks(errors: RecipeFormErrors): { label: string; href: string }[] {
+  let fields = (Object.keys(FIELD_LINKS) as RecipeFormField[]).filter((field) => errors.fields[field])
+  let links = fields.map((field) => FIELD_LINKS[field])
+  let ingredientRows = Object.keys(errors.ingredientRows).map(Number).sort((a, b) => a - b)
+  let stepRows = Object.keys(errors.stepRows).map(Number).sort((a, b) => a - b)
+  let at = links.findIndex((link) => link.href === '#langkah')
+  links.splice(at === -1 ? links.length : at, 0, ...ingredientRows.map((row) => ({ label: `Bahan ${row + 1}`, href: '#bahan' })))
+  links.push(...stepRows.map((row) => ({ label: `Langkah ${row + 1}`, href: '#langkah' })))
+  return links
 }

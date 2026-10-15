@@ -14,6 +14,14 @@ describe('pantry search', () => {
     assert.match(html, /Kurang \d+/)
   })
 
+  it('suggests a way out when no recipe matches', async () => {
+    let html = await (await createClient().get(`/cari-bahan?bahan=${TELUR}&waktu=15&kesulitan=sulit`)).text()
+    assert.match(html, /Belum ada resep yang cocok/)
+    assert.match(html, /Belum ada resep dengan telur yang masuk filter waktu dan kesulitanmu/)
+    assert.match(html, /Hapus filter/)
+    assert.doesNotMatch(html, /Paling cocok/)
+  })
+
   it('resolves typed ingredient names without JavaScript', async () => {
     let response = await createClient().get('/cari-bahan?tambah=telur,%20nasi%20putih')
     assert.equal(response.status, 303)

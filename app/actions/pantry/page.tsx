@@ -17,6 +17,7 @@ import { labelClass } from '../../ui/label.tsx'
 import { badgeVariants } from '../../ui/badge.tsx'
 import { cn, pageX } from '../../ui/utils.ts'
 import { Empty } from '../../ui/empty.tsx'
+import { StatusMessage } from '../../ui/status.tsx'
 
 export interface PantryPageProps {
   shell: Shell
@@ -33,6 +34,9 @@ export function PantryPage(handle: Handle<PantryPageProps>) {
     let { shell, state, selected, quickAdd, matches, savedRecipeIds, usingSavedPantry } = handle.props
     let base = routes.pantry.index.href()
     let href = (overrides: Partial<PantryParams>) => pantryHref(base, state, overrides)
+    let noMatches = selected.length > 0 && matches.length === 0
+    let filtered = state.maxMinutes !== null || state.difficulty !== null
+    let ingredientList = listNames(selected.map((ingredient) => ingredient.name.toLowerCase()))
     let visible = state.showAll ? matches : matches.slice(0, INITIAL_RESULTS)
     let hidden = matches.length - visible.length
 
@@ -206,6 +210,9 @@ export function PantryPage(handle: Handle<PantryPageProps>) {
 
           {/* Results */}
           <section aria-labelledby="hasil" class="flex flex-col pt-2 lg:pt-0">
+            {noMatches ? (
+              <h2 id="hasil" class="sr-only" aria-live="polite">0 resep bisa kamu masak</h2>
+            ) : (
             <div class="flex flex-col justify-between gap-3.5 pb-4 lg:flex-row lg:items-end lg:gap-4 lg:pb-10">
               <div class="flex flex-col gap-2">
                 <h2 id="hasil" class="text-[26px] leading-[30px] font-normal tracking-[-0.26px] lg:text-[60px] lg:leading-[66px] lg:tracking-[-0.6px]" aria-live="polite">
@@ -251,6 +258,7 @@ export function PantryPage(handle: Handle<PantryPageProps>) {
                 </noscript>
               </form>
             </div>
+            )}
 
             {selected.length === 0 ? (
               <Empty
@@ -258,15 +266,23 @@ export function PantryPage(handle: Handle<PantryPageProps>) {
                 title="Dapurmu masih kosong"
                 description="Tambahkan beberapa bahan yang kamu punya, lalu kami carikan resep yang paling cocok."
               />
-            ) : matches.length === 0 ? (
-              <Empty
-                title="Belum ada resep yang cocok"
-                description="Coba tambahkan bahan lain atau longgarkan filter waktu dan kesulitan."
+            ) : noMatches ? (
+              // pen.dev 12e: no published recipe uses any of these ingredients (within the filters).
+              <StatusMessage
+                icon="cooking-pot"
+                title="Belum ada resep yang cocok."
+                class="py-12 lg:py-24"
+                description={
+                  filtered
+                    ? `Belum ada resep dengan ${ingredientList} yang masuk filter waktu dan kesulitanmu. Tanpa filter, pilihannya lebih banyak.`
+                    : `Belum ada resep terbit yang memakai ${ingredientList}. Coba bahan lain yang lebih umum, seperti bawang atau telur.`
+                }
                 action={
-                  <ButtonLink href={href({ maxMinutes: null, difficulty: null })} variant="outline">
-                    Hapus filter
+                  <ButtonLink href={filtered ? href({ maxMinutes: null, difficulty: null }) : `${base}?kosong=1`} variant="dark" size="lg">
+                    {filtered ? 'Hapus filter' : 'Mulai dari awal'}
                   </ButtonLink>
                 }
+                link={filtered ? { href: `${base}?kosong=1`, label: 'Mulai dari awal' } : { href: routes.recipes.index.href(), label: 'Jelajahi resep' }}
               />
             ) : (
               <ol data-reveal-group>
@@ -481,4 +497,11 @@ function MatchLine(
       </div>
     )
   }
+}
+
+/** "a", "a dan b", "a, b, dan c"; long lists end in "dan N bahan lain". */
+function listNames(names: string[]): string {
+  let shown = names.length > 3 ? [...names.slice(0, 2), `${names.length - 2} bahan lain`] : names
+  if (shown.length <= 2) return shown.join(' dan ')
+  return `${shown.slice(0, -1).join(', ')}, dan ${shown[shown.length - 1]}`
 }

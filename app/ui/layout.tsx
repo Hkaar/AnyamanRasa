@@ -62,6 +62,7 @@ export function SiteLayout(handle: Handle<SiteLayoutProps>) {
           Langsung ke konten
         </a>
         <SiteHeader shell={shell} active={active} fullWidth={fullWidth} />
+        <OfflineBanner />
         <main id="konten" tabIndex={-1} class="outline-none">
           {children}
         </main>
@@ -70,6 +71,31 @@ export function SiteLayout(handle: Handle<SiteLayoutProps>) {
       </Document>
     )
   }
+}
+
+/** pen.dev 12c. Shown by entry.ts while the browser reports no connection. */
+function OfflineBanner() {
+  return () => (
+    <div data-offline-banner role="status" hidden class="bg-error-subtle">
+      <div class={cn(pageX, 'flex flex-wrap items-center gap-x-3 gap-y-2 py-3 text-[13px] leading-5 tracking-[0.26px]')}>
+        <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-bg/70 text-error">
+          <Icon name="wifi-off" size={15} />
+        </span>
+        <p class="min-w-0 flex-1 text-ink">
+          <span class="font-medium text-error">Kamu sedang offline.</span> Halaman ini tetap bisa dibaca, tapi
+          pencarian dan perubahan baru perlu koneksi.
+        </p>
+        <button
+          type="button"
+          data-offline-retry
+          class="flex h-8 items-center gap-1.5 rounded-sm bg-bg/70 px-3 font-medium text-error transition-colors hover:bg-bg"
+        >
+          <Icon name="rotate-cw" size={14} />
+          Sambungkan lagi
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function SiteHeader(handle: Handle<{ shell: Shell; active: NavKey; fullWidth: boolean }>) {

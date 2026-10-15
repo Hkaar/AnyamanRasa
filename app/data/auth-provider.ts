@@ -209,7 +209,7 @@ export function authErrorMessage(error: AuthFailure): string {
     case 'email-not-confirmed':
       return 'Email belum dikonfirmasi. Buka tautan konfirmasi yang kami kirim ke emailmu.'
     case 'email-taken':
-      return 'Email sudah terdaftar. Silakan masuk.'
+      return 'Email ini sudah terdaftar di AnyamanRasa.'
     case 'weak-password':
       return 'Kata sandi terlalu lemah. Gunakan minimal 8 karakter, kombinasi huruf dan angka.'
     case 'rate-limited':

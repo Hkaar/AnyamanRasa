@@ -8,7 +8,8 @@ import { Icon } from '../../ui/icon.tsx'
 import { SiteLayout } from '../../ui/layout.tsx'
 import { LoadMore, LoadMoreChunk } from '../../ui/load-more.tsx'
 import { Select } from '../../ui/select.tsx'
-import { RecipeCard } from '../../ui/recipe-card.tsx'
+import { RecipeCard, RecipeCardSkeleton } from '../../ui/recipe-card.tsx'
+import { StatusMessage } from '../../ui/status.tsx'
 import type { Shell } from '../../ui/shell.ts'
 import { DURATION_OPTIONS, filtersToParams, hasActiveFilters } from './filters.ts'
 import { Button, ButtonLink } from '../../ui/button.tsx'
@@ -155,7 +156,7 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
                 )}
               </div>
               <div class="flex items-center gap-4">
-                <p class="text-[13px] text-muted" aria-live="polite">
+                <p class="text-[13px] text-muted" aria-live="polite" data-results-count>
                   {formatCount(total)} resep ditemukan
                 </p>
                 <Select
@@ -192,26 +193,42 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
           </div>
         </form>
 
-        <section aria-label="Hasil resep" class="bg-hover [--card-hover:var(--color-bg)]">
-          <div class={cn(pageX, 'flex flex-col gap-12 pt-10 pb-20 lg:gap-16 lg:pt-20 lg:pb-32')}>
+        {/* While a filter change loads, entry.ts marks this section `data-loading` and the
+            placeholder grid (pen.dev 02c) replaces the results until the new page arrives. */}
+        <section
+          aria-label="Hasil resep"
+          data-results
+          class={cn('group/results [--card-hover:var(--color-bg)] data-loading:bg-bg', recipes.length > 0 && 'bg-hover')}
+        >
+          <div class={cn(pageX, 'pt-10 pb-20 lg:pt-20 lg:pb-32', recipes.length === 0 && 'lg:pt-28 lg:pb-40')}>
+          <div class="hidden grid-cols-2 gap-x-3.5 gap-y-10 group-data-loading/results:grid md:gap-x-6 lg:grid-cols-4 lg:gap-y-12">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div key={index} class={index >= 4 ? 'opacity-60' : undefined}>
+                <RecipeCardSkeleton />
+              </div>
+            ))}
+          </div>
+          <div class="flex flex-col gap-12 group-data-loading/results:hidden lg:gap-16">
           {recipes.length === 0 ? (
-            <div
-              data-slot="empty"
-              class="mx-auto flex w-full max-w-[440px] flex-col items-center gap-4 rounded-lg bg-surface-dark px-8 py-16 text-center"
-            >
-              <span data-slot="empty-media" class="flex size-14 items-center justify-center rounded-full bg-white/8 text-white">
-                <Icon name="search-x" size={22} />
-              </span>
-              <h2 data-slot="empty-title" class="text-[28px] leading-[31px] font-normal tracking-[-0.28px] text-white">
-                Tidak ada resep yang cocok
-              </h2>
-              <p data-slot="empty-description" class="text-[15px] leading-[23px] tracking-[0.02em] text-line-strong">
-                {emptyDescription(filters, selectedCategories)}
-              </p>
-              <ButtonLink href={base} variant="default" class="h-auto rounded-full px-6 py-3.5 text-[15px]">
-                Hapus filter
-              </ButtonLink>
-            </div>
+            <StatusMessage
+              icon="search-x"
+              title="Tidak ada resep yang cocok."
+              description={emptyDescription(filters, selectedCategories)}
+              action={
+                hasActiveFilters(filters) ? (
+                  <ButtonLink href={base} variant="dark" size="lg">
+                    {filters.query && selectedCategories.length + filters.difficulties.length + (filters.maxMinutes === null ? 0 : 1) === 0
+                      ? 'Hapus pencarian'
+                      : 'Hapus semua filter'}
+                  </ButtonLink>
+                ) : undefined
+              }
+              link={
+                hasActiveFilters(filters)
+                  ? { href: `${base}?urut=populer`, label: 'Lihat resep populer' }
+                  : { href: routes.recipes.create.index.href(), label: 'Tulis resep' }
+              }
+            />
           ) : (
             <>
               <div
@@ -243,6 +260,7 @@ export function RecipeIndexPage(handle: Handle<RecipeIndexPageProps>) {
               />
             </>
           )}
+          </div>
           </div>
         </section>
       </SiteLayout>
@@ -293,13 +311,21 @@ function categorySummary(selected: Category[]): string {
   return `${selected[0]!.name}, ${selected[1]!.name} +${selected.length - 2}`
 }
 
+const COUNT_WORDS = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam']
+
 function emptyDescription(filters: RecipeFilters, categories: Category[]): string {
   let parts = [
     ...categories.map((c) => c.name),
     ...filters.difficulties.map(difficultyLabel),
     ...(filters.maxMinutes !== null ? [`≤\u00a0${filters.maxMinutes}\u00a0menit`] : []),
   ]
-  let subject = filters.query ? `Belum ada resep “${filters.query}”` : 'Belum ada resep'
-  let withFilters = parts.length > 0 ? ` dengan filter ${parts.join(' · ')}` : ''
-  return `${subject}${withFilters}. Coba kata kunci lain atau kurangi filter.`
+  if (filters.query) {
+    return parts.length > 0
+      ? `Belum ada resep “${filters.query}” dengan filter ini. Hapus filter atau coba kata kunci lain.`
+      : `Belum ada resep “${filters.query}”. Coba kata kunci lain, atau cari dari bahan yang kamu punya.`
+  }
+  if (parts.length === 0) return 'Belum ada resep yang diterbitkan. Jadilah yang pertama menulis resep.'
+  if (parts.length === 1) return `Belum ada resep dengan filter ${parts[0]}. Hapus filter untuk melihat lebih banyak resep.`
+  let count = COUNT_WORDS[parts.length] ?? String(parts.length)
+  return `${count} filter sekaligus terlalu sempit. Hapus beberapa untuk melihat lebih banyak resep.`
 }

@@ -5,7 +5,7 @@ import { Session } from 'remix/session'
 import type { Viewer } from '../domain/types.ts'
 import type { AppContext } from '../router.ts'
 import { loginHref } from '../ui/layout.tsx'
-import { NotFoundPage } from '../ui/error-page.tsx'
+import { type NotFoundCopy, NotFoundPage } from '../ui/error-page.tsx'
 import type { Flash, Shell } from '../ui/shell.ts'
 
 const FLASH_KEY = 'flash'
@@ -42,13 +42,14 @@ export function safeRedirectTarget(value: unknown, fallback = '/'): string {
   return value
 }
 
-export function notFound(context: AppContext, message = 'Halaman tidak ditemukan.') {
-  return context.render(<NotFoundPage shell={getShell(context)} message={message} />, { status: 404 })
+export function notFound(context: AppContext, copy?: string | NotFoundCopy) {
+  let page = typeof copy === 'string' ? { message: copy } : copy
+  return context.render(<NotFoundPage shell={getShell(context)} copy={page} />, { status: 404 })
 }
 
 export function forbidden(context: AppContext) {
   return context.render(
-    <NotFoundPage shell={getShell(context)} message="Kamu tidak punya akses ke halaman ini." status={403} />,
+    <NotFoundPage shell={getShell(context)} status={403} />,
     { status: 403 },
   )
 }

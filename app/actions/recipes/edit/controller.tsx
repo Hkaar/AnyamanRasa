@@ -4,6 +4,7 @@ import { createController } from 'remix/router'
 import { getRecipe, listCategories, updateRecipe } from '../../../data/recipes.ts'
 import { routes } from '../../../routes.ts'
 import { forbidden, getShell, notFound, requireViewer, setFlash } from '../../shell.tsx'
+import { RECIPE_NOT_FOUND } from '../../../ui/error-page.tsx'
 import { RecipeEditorPage } from '../editor/page.tsx'
 import { categoryIdsFor, flashFor, processSubmission, valuesFromRecipe } from '../editor/submission.ts'
 
@@ -13,7 +14,7 @@ export default createController(routes.recipes.edit, {
       let viewer = requireViewer(context)
       if (viewer instanceof Response) return viewer
       let recipe = await getRecipe(context.db, context.params.id)
-      if (!recipe || recipe.status === 'archived') return notFound(context)
+      if (!recipe || recipe.status === 'archived') return notFound(context, RECIPE_NOT_FOUND)
       if (recipe.author.id !== viewer.id) return forbidden(context)
       return context.render(
         <RecipeEditorPage
@@ -31,7 +32,7 @@ export default createController(routes.recipes.edit, {
       let viewer = requireViewer(context)
       if (viewer instanceof Response) return viewer
       let recipe = await getRecipe(context.db, context.params.id)
-      if (!recipe || recipe.status === 'archived') return notFound(context)
+      if (!recipe || recipe.status === 'archived') return notFound(context, RECIPE_NOT_FOUND)
       // Ownership is enforced on the server for every mutation (SKPL-F-09.2).
       if (recipe.author.id !== viewer.id) return forbidden(context)
 

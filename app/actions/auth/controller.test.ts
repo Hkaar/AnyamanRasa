@@ -8,7 +8,21 @@ describe('authentication', () => {
   it('rejects wrong passwords without revealing which field is wrong', async () => {
     let response = await createClient().login(SARI, 'salah12345')
     assert.equal(response.status, 400)
-    assert.match(await response.text(), /Email atau kata sandi salah/)
+    let html = await response.text()
+    assert.match(html, /Email atau kata sandi salah/)
+    assert.match(html, /Huruf besar dan kecil pada kata sandi dibedakan/)
+  })
+
+  it('points a taken sign-up email to the login page, prefilled', async () => {
+    let client = createClient()
+    let response = await client.post('/daftar', { username: 'pengguna_baru_dua', email: SARI, password: 'rahasia123', confirm: 'rahasia123' })
+    let html = await response.text()
+    assert.equal(response.status, 400)
+    assert.match(html, /Ada 1 hal yang perlu diperbaiki sebelum akunmu dibuat/)
+    assert.match(html, /Email ini sudah terdaftar di AnyamanRasa/)
+    assert.match(html, /href="\/masuk\?email=sari.wulandari%40email.com"/)
+    let login = await (await client.get('/masuk?email=sari.wulandari%40email.com')).text()
+    assert.match(login, /value="sari.wulandari@email.com"/)
   })
 
   it('signs in with email or username and returns to the requested page', async () => {

@@ -32,7 +32,7 @@ export default createController(routes.auth.register, {
           isEmailTaken(context.db, result.value.email),
         ])
         if (usernameTaken) errors.username = 'Nama pengguna sudah dipakai.'
-        if (emailTaken) errors.email = 'Email sudah terdaftar. Silakan masuk.'
+        if (emailTaken) errors.email = authErrorMessage('email-taken')
       }
       let renderError = () =>
         context.render(<RegisterPage shell={getShell(context)} step="email" values={values} errors={errors} />, { status: 400 })

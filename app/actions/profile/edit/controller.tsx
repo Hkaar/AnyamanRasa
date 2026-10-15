@@ -6,7 +6,7 @@ import { findProfileById, isUsernameTaken, updateProfile } from '../../../data/u
 import { type FieldErrors, text, validateUsername } from '../../../domain/validation.ts'
 import { routes } from '../../../routes.ts'
 import { getShell, notFound, requireViewer, setFlash } from '../../shell.tsx'
-import { ProfileEditPage } from '../pages.tsx'
+import { BIO_LIMIT, ProfileEditPage } from '../pages.tsx'
 
 type ProfileField = 'name' | 'username' | 'bio' | 'location' | 'avatar'
 
@@ -41,7 +41,7 @@ export default createController(routes.profile.edit, {
       else if (values.username !== profile.username && (await isUsernameTaken(context.db, values.username))) {
         errors.username = 'Nama pengguna sudah dipakai.'
       }
-      if (values.bio.length > 280) errors.bio = 'Bio maksimal 280 karakter.'
+      if (values.bio.length > BIO_LIMIT) errors.bio = `Bio maksimal ${BIO_LIMIT} karakter.`
       if (values.location.length > 100) errors.location = 'Lokasi maksimal 100 karakter.'
 
       let avatarUrl: string | null | undefined

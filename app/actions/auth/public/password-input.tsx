@@ -35,6 +35,12 @@ export const PasswordInput = clientEntry(
     return () => {
       let { id, name, autocomplete, invalid, placeholder, meter, help, error, inputClass: extraClass } = handle.props
       let strength = passwordStrength(value)
+      // The rules validatePassword enforces, checked off while typing (pen.dev 12h).
+      let rules = [
+        { ok: value.length >= 8, label: 'Minimal 8 karakter' },
+        { ok: /[a-zA-Z]/.test(value) && /[0-9]/.test(value), label: 'Kombinasi huruf dan angka' },
+      ]
+      let weak = rules.some((rule) => !rule.ok)
       return (
         <div class="flex flex-col gap-[18px]">
           <div class="flex flex-col gap-1.5">
@@ -78,10 +84,24 @@ export const PasswordInput = clientEntry(
             <div class="flex flex-col gap-1.5" aria-live="polite">
               <div class="flex gap-1" aria-hidden="true">
                 {[1, 2, 3, 4].map((bar) => (
-                  <span key={bar} class={cn('h-[3px] flex-1 rounded-full', bar <= strength.score ? 'bg-accent' : 'bg-line')} />
+                  <span
+                    key={bar}
+                    class={cn('h-[3px] flex-1 rounded-full', bar <= Math.max(strength.score, 1) ? (weak ? 'bg-error' : 'bg-accent') : 'bg-line')}
+                  />
                 ))}
               </div>
-              <span class="text-xs tracking-[0.24px] text-muted">Kekuatan kata sandi: {strength.label}</span>
+              <span class={cn('text-xs font-medium tracking-[0.24px]', weak ? 'text-error' : 'text-muted')}>
+                Kekuatan kata sandi: {weak ? 'Lemah' : strength.label}
+              </span>
+              <ul class="flex flex-col gap-1 pt-0.5">
+                {rules.map((rule) => (
+                  <li key={rule.label} class={cn('flex items-center gap-2 text-xs tracking-[0.24px]', rule.ok ? 'text-muted' : 'text-ink')}>
+                    <Icon name={rule.ok ? 'check' : 'x'} size={14} class={rule.ok ? 'text-muted' : 'text-error'} />
+                    {rule.label}
+                    <span class="sr-only">{rule.ok ? '(terpenuhi)' : '(belum terpenuhi)'}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
