@@ -15,12 +15,24 @@ if (!connectionString) {
 // instance's pool small and release idle connections quickly there. DATABASE_POOL_MAX overrides.
 const serverless = Boolean(process.env.VERCEL)
 
+// A long-running server keeps a few connections warm instead: opening one to a hosted pooler
+// costs several network round trips (TCP, TLS, auth), often seconds from a distant region, so
+// closing them after a short idle spell made the next page view pay that again.
 const pool = new pg.Pool({
   connectionString,
   max: Number(process.env.DATABASE_POOL_MAX) || (serverless ? 3 : 10),
-  idleTimeoutMillis: serverless ? 5_000 : 10_000,
+  min: serverless ? 0 : 2,
+  idleTimeoutMillis: serverless ? 5_000 : 300_000,
+  keepAlive: !serverless,
   // Fail fast (error page) instead of hanging until the platform kills the request.
   connectionTimeoutMillis: 10_000,
+})
+
+// An idle connection can drop at any time (network change, pooler restart). pg reports that as
+// an 'error' event on the pool, and an unhandled one crashes the process. The pool has already
+// discarded the broken client and opens a new one on demand, so logging is enough.
+pool.on('error', (error) => {
+  console.error('Idle database connection lost:', error.message)
 })
 
 // A frozen Vercel instance cannot run the idle timer, so it would keep its connections open

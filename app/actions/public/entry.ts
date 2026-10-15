@@ -7,6 +7,7 @@ import { run } from 'remix/component'
 
 import { initLoadMore } from './load-more.ts'
 import { initPageMotion, startPageMotion } from './motion.ts'
+import { startNavigationProgress } from './progress.ts'
 
 const app = run({
   async loadModule(moduleUrl, exportName) {
@@ -111,6 +112,7 @@ function initPage() {
 }
 
 startPageMotion()
+startNavigationProgress()
 initPage()
 if ('navigation' in window) {
   ;(window.navigation as EventTarget).addEventListener('navigatesuccess', initPage)
