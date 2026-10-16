@@ -334,6 +334,51 @@ export const RecipeEditor = clientEntry(
             </nav>
           </aside>
 
+          {/* Phones (pen.dev 07/08 mobile): the same sections as a sticky strip. */}
+          <nav aria-label="Bagian formulir" class="sticky top-[60px] z-10 -mx-5 -mt-4 border-y border-line bg-subtle/95 px-2 py-3 backdrop-blur md:-mx-10 lg:hidden">
+            <ol class="grid grid-cols-4">
+              {SECTIONS.map((section, index) => {
+                let isActive = active === section.id
+                let isDone = done[section.id]
+                let isRejected = rejected[section.id] && !isDone
+                return (
+                  <li key={section.id}>
+                    <a
+                      href={`#${section.id}`}
+                      aria-current={isActive ? 'location' : undefined}
+                      class={cn(
+                        'flex flex-col items-center gap-1.5 text-center text-[11px] leading-tight tracking-[0.02em]',
+                        isActive ? 'font-medium text-ink' : isRejected ? 'text-error' : isDone ? 'text-ink' : 'text-muted',
+                      )}
+                    >
+                      <span
+                        class={cn(
+                          'flex size-6 items-center justify-center rounded-full text-[11px] font-medium',
+                          isRejected
+                            ? 'bg-error text-white'
+                            : isDone
+                              ? 'bg-accent text-white'
+                              : isActive
+                                ? 'bg-ink text-white'
+                                : 'border border-line-strong bg-bg text-muted',
+                        )}
+                      >
+                        {isRejected ? (
+                          <Icon name="x" size={12} strokeWidth={2.5} />
+                        ) : isDone ? (
+                          <Icon name="check" size={12} strokeWidth={2.5} />
+                        ) : (
+                          index + 1
+                        )}
+                      </span>
+                      {section.label}
+                    </a>
+                  </li>
+                )
+              })}
+            </ol>
+          </nav>
+
           <div class="flex min-w-0 flex-col gap-14">
             {source && (
               <div class="flex flex-col gap-5 rounded-lg bg-hover p-6 tracking-[0.02em]">
@@ -366,6 +411,10 @@ export const RecipeEditor = clientEntry(
                     Hubungan ini akan tampil di halaman resep dan Graf Resep setelah diterbitkan.
                   </p>
                 </div>
+                <ButtonLink href={source.href} variant="outline" class="w-full bg-bg sm:hidden" target="_blank">
+                  Lihat resep asli
+                  <Icon name="arrow-up-right" />
+                </ButtonLink>
               </div>
             )}
 
@@ -522,11 +571,12 @@ export const RecipeEditor = clientEntry(
                 <Help id="foto-help" error={fieldError.image} />
               </div>
 
-              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <NumberField id="persiapan" label="Persiapan (menit)" value={values.prepMinutes} error={fieldError.prepMinutes} />
                 <NumberField id="memasak" label="Memasak (menit)" value={values.cookMinutes} error={fieldError.cookMinutes} />
                 <NumberField id="porsi" label="Porsi" value={values.servings} error={fieldError.servings} min={1} max={50} />
                 <Segmented
+                  class="col-span-2 lg:col-span-1"
                   name="kesulitan"
                   label="Kesulitan"
                   value={values.difficulty}
@@ -944,12 +994,12 @@ function NumberField(
 
 /** pen.dev "Kesulitan": separate pill options on native radios, the chosen one in ink. */
 function Segmented(
-  handle: Handle<{ name: string; value: string; options: { value: string; label: string }[]; label: string }>,
+  handle: Handle<{ name: string; value: string; options: { value: string; label: string }[]; label: string; class?: string }>,
 ) {
   return () => {
     let { name, value, options, label } = handle.props
     return (
-      <fieldset class="flex min-w-0 flex-col">
+      <fieldset class={cn('flex min-w-0 flex-col', handle.props.class)}>
         <legend class={cn(labelClass, 'mb-1.5')}>{label}</legend>
         <div class="flex h-11 gap-2">
           {options.map((option) => (

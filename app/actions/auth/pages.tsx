@@ -196,6 +196,36 @@ function RegisterPanel() {
   )
 }
 
+/** Phones (pen.dev 10b mobile): the register panel shrunk to a card above the form. */
+function RegisterPanelCompact() {
+  return () => (
+    <div class="flex flex-col gap-4 rounded-lg bg-surface-dark bg-[radial-gradient(ellipse_80%_60%_at_50%_20%,#D2693F59_0%,#D2693F00_100%)] p-3.5 pb-5 lg:hidden" aria-hidden="true">
+      <div class="relative flex h-28 items-center overflow-hidden rounded-md bg-[linear-gradient(160deg,var(--color-peach),var(--color-coral))] px-2.5">
+        <img src="/images/generated-2.webp" alt="" class="absolute inset-0 size-full scale-150 object-cover" />
+        <span class="relative flex items-center gap-2.5 rounded-md bg-bg py-2 pr-3.5 pl-2 shadow-[0_8px_20px_#3E2F2833]">
+          <span class="flex size-8 items-center justify-center rounded-full bg-accent text-xs text-white">RA</span>
+          <span class="flex flex-col">
+            <span class="text-[13px] text-ink">
+              <span class="font-medium">Rina</span> menyimpan Rendang Sapi
+            </span>
+            <span class="flex items-center gap-1 text-[11px] text-accent-strong">
+              <Icon name="bookmark" size={11} />
+              Simpan resep <span class="text-faint">· baru saja</span>
+            </span>
+          </span>
+        </span>
+      </div>
+      <div class="flex flex-col gap-1.5 px-1">
+        <p class="text-xs tracking-[0.24px] text-sand">Gratis untuk semua juru masak</p>
+        <p class="text-xl leading-[26px] tracking-[-0.2px] text-white">
+          Tulis resep. Buat variasi.
+          <span class="block text-lilac">Rayakan rasa bersama.</span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function Activity(
   handle: Handle<{ class: string; initials: string; tone: string; name: string; action: string; icon: 'bookmark' | 'pencil'; tag: string; time: string }>,
 ) {
@@ -397,7 +427,8 @@ export function RegisterPage(handle: Handle<RegisterPageProps>) {
 function RegisterMethods(handle: Handle<{ shell: Shell; error?: string }>) {
   return () => (
     <div class="flex flex-1 flex-col gap-8">
-      <div class="flex flex-col gap-2 lg:gap-3.5">
+      <RegisterPanelCompact />
+      <div class="-mt-2 flex flex-col gap-2 lg:mt-0 lg:gap-3.5">
         <h1 class={headingClass}>Buat akun AnyamanRasa</h1>
         <p class={leadClass}>Gratis. Simpan resep favorit, tulis resepmu sendiri, dan buat variasi.</p>
       </div>
@@ -409,10 +440,10 @@ function RegisterMethods(handle: Handle<{ shell: Shell; error?: string }>) {
           Daftar dengan email
         </ButtonLink>
       </div>
+      <p class={cn(termsClass, 'text-center')}>
+        Sebelum akun dibuat, kamu akan diminta meninjau <LegalLink to="terms" /> dan <LegalLink to="privacy" />.
+      </p>
       <div class="mt-auto flex flex-col gap-8 lg:mt-0">
-        <p class={cn(termsClass, 'text-center')}>
-          Sebelum akun dibuat, kamu akan diminta meninjau <LegalLink to="terms" /> dan <LegalLink to="privacy" />.
-        </p>
         <p class="pt-1 text-center text-[13px] tracking-[0.26px] text-muted">
           Sudah punya akun?{' '}
           <a href={routes.auth.login.index.href()} class="font-medium text-ink hover:underline">
@@ -430,7 +461,7 @@ function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'val
     let fieldErrorCount = [errors.username, errors.email, errors.password, errors.confirm].filter(Boolean).length
     let emailTaken = errors.email === authErrorMessage('email-taken')
     return (
-      <div class="flex flex-col gap-7">
+      <div class="flex flex-col gap-7 pb-32 lg:pb-0">
         <a
           href={routes.auth.register.index.href()}
           class="flex items-center gap-1.5 self-start text-[13px] font-medium tracking-[0.26px] text-muted hover:text-ink"
@@ -439,6 +470,7 @@ function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'val
           Pilihan daftar lainnya
         </a>
         <div class="flex flex-col gap-2 lg:gap-3.5">
+          <p class="text-xs font-medium tracking-[0.24px] text-accent-strong lg:hidden">Langkah 1 dari 2</p>
           <h1 class={headingClass}>Daftar dengan email</h1>
           <p class={leadClass}>Isi data di bawah untuk membuat akun AnyamanRasa-mu.</p>
         </div>
@@ -502,10 +534,16 @@ function RegisterEmailForm(handle: Handle<Pick<RegisterPageProps, 'shell' | 'val
               <PasswordInput id="confirm" name="confirm" autocomplete="new-password" invalid={Boolean(errors.confirm)} inputClass="h-12 lg:h-11" />
             </Field>
           </div>
-          <Button type="submit" variant="default" class="h-[52px] text-[15px] lg:h-12">
-            Lanjut
-          </Button>
-          <p class={termsClass}>Langkah 1 dari 2 · Berikutnya kamu akan meninjau ketentuan dan kebijakan privasi.</p>
+          {/* Pinned to the bottom on phones (pen.dev 10c mobile). */}
+          <div class="fixed inset-x-0 bottom-0 z-10 flex flex-col gap-3 bg-bg/95 px-5 pt-4 pb-6 shadow-[0_-12px_24px_#FFFFFF] backdrop-blur lg:static lg:gap-7 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
+            <Button type="submit" variant="default" class="h-[52px] text-[15px] lg:h-12">
+              <Icon name="arrow-right" class="lg:hidden" />
+              Lanjut
+            </Button>
+            <p class={cn(termsClass, 'max-lg:text-center')}>
+              Langkah 1 dari 2 · Berikutnya kamu akan meninjau ketentuan dan kebijakan privasi.
+            </p>
+          </div>
         </form>
       </div>
     )

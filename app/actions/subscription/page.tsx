@@ -51,18 +51,18 @@ function Steps(handle: Handle<{ current: Step; done?: boolean; class?: string }>
     let { current, done = false } = handle.props
     let labels = ['Paket', 'Pembayaran', 'Selesai']
     return (
-      <ol class={cn('flex flex-wrap items-center gap-y-2', handle.props.class)} aria-label="Langkah berlangganan">
+      <ol class={cn('flex items-center', handle.props.class)} aria-label="Langkah berlangganan">
         {labels.map((label, index) => {
           let step = index + 1
           let complete = done || step < current
           let active = !done && step === current
           return (
             <li key={label} class="flex items-center">
-              {index > 0 && <span class={cn('mx-2 h-0.5 w-6 rounded-full sm:w-8', step <= current || done ? 'bg-accent' : 'bg-pressed')} aria-hidden="true" />}
+              {index > 0 && <span class={cn('mx-1 h-0.5 w-3 rounded-full sm:mx-2 sm:w-8', step <= current || done ? 'bg-accent' : 'bg-pressed')} aria-hidden="true" />}
               <span
                 aria-current={active ? 'step' : undefined}
                 class={cn(
-                  'flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5 text-[13px] tracking-[0.26px]',
+                  'flex items-center gap-1.5 rounded-full py-1.5 pr-2.5 pl-1.5 text-xs tracking-[0.24px] whitespace-nowrap sm:gap-2 sm:pr-3 sm:text-[13px] sm:tracking-[0.26px]',
                   active ? 'bg-accent-subtle font-medium text-accent-strong' : complete ? 'text-ink' : 'text-muted',
                 )}
               >
@@ -110,28 +110,55 @@ function CheckoutLayout(
                 <Icon name="arrow-left" size={14} />
                 {back.label}
               </a>
-              <h1 class="text-[36px] leading-[1.1] tracking-[-0.4px] text-ink lg:text-[48px] lg:tracking-[-0.96px]">{title}</h1>
+              <h1 class="text-[28px] leading-[1.15] tracking-[-0.3px] text-ink lg:text-[48px] lg:tracking-[-0.96px]">{title}</h1>
               <Steps current={step} />
             </div>
             {children}
           </div>
-          <div class="lg:sticky lg:top-[104px] lg:self-start">{summary}</div>
+          <div class="hidden lg:sticky lg:top-[104px] lg:block lg:self-start">{summary}</div>
         </div>
       </SiteLayout>
     )
   }
 }
 
-function OrderSummary(handle: Handle<{ checkout: Checkout; withPromo: boolean }>) {
+/** Phones (pen.dev 14a/14b mobile): a compact total that opens into the full order summary. */
+function MobileTotal(handle: Handle<{ checkout: Checkout; withPromo: boolean }>) {
   return () => {
     let { checkout, withPromo } = handle.props
+    let plan = PLANS[checkout.plan]
+    let price = quote(checkout.plan, checkout.period, withPromo ? checkout.promoPercent : 0)
+    let label = withPromo && price.discount > 0 ? `Total · setelah promo ${checkout.promoCode}` : `${plan.name} · ${PERIOD_LABEL[checkout.period]}`
+    return (
+      <details class="group/total rounded-md bg-subtle lg:hidden">
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+          <span class="flex flex-col gap-0.5">
+            <span class="text-xs tracking-[0.24px] text-muted">{label}</span>
+            <span class="text-[22px] leading-tight tracking-[-0.22px] text-ink">{formatRupiah(price.total)}</span>
+          </span>
+          <span class="flex items-center gap-1 text-[13px] font-medium text-accent-strong">
+            Lihat rincian
+            <Icon name="chevron-down" size={14} class="transition-transform group-open/total:rotate-180" />
+          </span>
+        </summary>
+        <div class="px-1 pb-1">
+          <OrderSummary checkout={checkout} withPromo={withPromo} id="ringkasan-ponsel" />
+        </div>
+      </details>
+    )
+  }
+}
+
+function OrderSummary(handle: Handle<{ checkout: Checkout; withPromo: boolean; id?: string }>) {
+  return () => {
+    let { checkout, withPromo, id = 'ringkasan' } = handle.props
     let plan = PLANS[checkout.plan]
     let percent = withPromo ? checkout.promoPercent : 0
     let price = quote(checkout.plan, checkout.period, percent)
     let row = 'flex justify-between gap-4 text-sm tracking-[0.28px]'
     return (
-      <aside aria-labelledby="ringkasan" class="flex flex-col gap-6 rounded-lg bg-subtle p-6 lg:p-8">
-        <p id="ringkasan" class="text-[13px] tracking-[0.26px] text-muted">
+      <aside aria-labelledby={id} class="flex flex-col gap-6 rounded-lg bg-subtle p-6 lg:p-8">
+        <p id={id} class="text-[13px] tracking-[0.26px] text-muted">
           Ringkasan pesanan
         </p>
         <div class="flex items-center gap-3.5">
@@ -290,6 +317,7 @@ export function PlanPage(handle: Handle<{ shell: Shell; checkout: Checkout }>) {
           </fieldset>
           <PeriodOptions checkout={checkout} />
           <div class="flex flex-col gap-4">
+            <MobileTotal checkout={checkout} withPromo={false} />
             <Button type="submit" formAction={routes.subscription.payment.index.href()} size="lg" class="h-[52px] w-full text-[15px] font-medium lg:h-[54px]">
               <Icon name="arrow-right" />
               Lanjut ke pembayaran
@@ -371,13 +399,13 @@ export function PaymentPage(handle: Handle<PaymentPageProps>) {
                 Pembayaran terenkripsi
               </span>
             </div>
-            <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
+            <div class="flex flex-col gap-2 sm:grid sm:grid-cols-5 sm:gap-2.5">
               {PAYMENT_METHODS.map((option) => (
                 <label
                   key={option.id}
                   class={cn(
                     tileClass,
-                    'flex-col items-center gap-2.5 px-3.5 py-4 text-[13px] font-medium text-ink has-checked:bg-ink has-checked:text-white has-checked:hover:bg-ink',
+                    'items-center gap-3 px-4 py-3 text-[13px] font-medium text-ink sm:flex-col sm:gap-2.5 sm:px-3.5 sm:py-4 has-checked:bg-ink has-checked:text-white has-checked:hover:bg-ink',
                   )}
                 >
                   <input type="radio" name="metode" value={option.id} checked={checkout.method === option.id} class="sr-only" />
@@ -472,6 +500,7 @@ export function PaymentPage(handle: Handle<PaymentPageProps>) {
           </div>
 
           <div class="flex flex-col gap-5">
+            <MobileTotal checkout={checkout} withPromo />
             <label class="flex cursor-pointer items-start gap-3 text-[13px] leading-5 tracking-[0.26px] text-muted">
               <input
                 type="checkbox"
@@ -542,7 +571,7 @@ function CenteredStep(handle: Handle<{ shell: Shell; title: string; step: Step; 
 
 const markClass =
   'flex size-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--color-peach),var(--color-pink)_60%,var(--color-lilac))] text-ink'
-const stepHeading = 'text-[36px] leading-[1.1] tracking-[-0.5px] text-balance text-ink lg:text-[52px] lg:tracking-[-1px]'
+const stepHeading = 'text-[30px] leading-[1.15] tracking-[-0.5px] text-balance text-ink lg:text-[52px] lg:tracking-[-1px]'
 const stepLead = 'max-w-[560px] text-[15px] leading-6 tracking-[0.2px] text-pretty text-muted'
 
 const PENDING_COPY: Record<string, { title: string; lead: (amount: string, phone: string | null) => string }> = {
@@ -582,8 +611,8 @@ export function PendingPage(handle: Handle<{ shell: Shell; checkout: Checkout; p
             <span class="size-1.5 animate-pulse rounded-full bg-accent" aria-hidden="true" />
             Menunggu konfirmasi · sisa <span data-countdown="300">05:00</span>
           </p>
-          <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 pt-2">
-            <ButtonLink href={doneHref} variant="dark" size="lg">
+            <div class="flex w-full flex-col items-center gap-x-5 gap-y-4 pt-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center">
+            <ButtonLink href={doneHref} variant="dark" size="lg" class="w-full sm:w-auto">
               <Icon name="check" />
               Saya sudah bayar
             </ButtonLink>
@@ -629,8 +658,8 @@ export function DonePage(handle: Handle<{ shell: Shell; checkout: Checkout; orde
             </div>
           ))}
         </dl>
-        <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 pt-2">
-          <ButtonLink href={routes.recipes.index.href()} variant="dark" size="lg">
+        <div class="flex w-full flex-col items-center gap-x-5 gap-y-4 pt-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center">
+          <ButtonLink href={routes.recipes.index.href()} variant="dark" size="lg" class="w-full sm:w-auto">
             <Icon name="book-open" />
             Jelajahi resep
           </ButtonLink>

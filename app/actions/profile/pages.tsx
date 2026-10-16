@@ -326,6 +326,25 @@ export function ProfileEditPage(
           </div>
 
           <div class="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
+            {/* Phones (pen.dev 09b mobile): the sections as a scrolling row of pills. */}
+            <nav aria-label="Bagian pengaturan" class="-mx-5 -mt-4 overflow-x-auto px-5 md:-mx-10 md:px-10 lg:hidden">
+              <ul class="flex gap-2">
+                {SETTINGS_SECTIONS.map((section, index) => (
+                  <li key={section.id} class="shrink-0">
+                    <a
+                      href={`#${section.id}`}
+                      class={cn(
+                        'flex h-9 items-center gap-2 rounded-full px-3.5 text-[13px] tracking-[0.26px] whitespace-nowrap',
+                        index === 0 ? 'bg-surface-dark text-white' : 'border border-line text-ink',
+                      )}
+                    >
+                      <Icon name={section.icon} size={15} />
+                      {section.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
             <nav aria-label="Bagian pengaturan" class="hidden lg:block">
               <ul class="sticky top-24 flex flex-col gap-1">
                 {SETTINGS_SECTIONS.map((section, index) => (

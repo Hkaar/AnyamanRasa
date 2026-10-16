@@ -82,7 +82,7 @@ export function RecipeEditorPage(handle: Handle<RecipeEditorPageProps>) {
                 {copy.description}
               </p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:items-center">
               <Button type="submit" name="aksi" value="draf" variant="dark" size="lg" formNoValidate>
                 <Icon name="file" />
                 Simpan Draf

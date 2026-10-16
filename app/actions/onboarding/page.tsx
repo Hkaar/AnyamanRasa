@@ -49,12 +49,12 @@ export type OnboardingView =
       shown: RecipeSummary[]
     }
 
-const headingClass = 'text-[36px] leading-10 font-normal tracking-[-0.36px] text-ink lg:text-[52px] lg:leading-[57px] lg:tracking-[-0.52px]'
+const headingClass = 'text-[30px] leading-[34px] font-normal tracking-[-0.3px] text-ink lg:text-[52px] lg:leading-[57px] lg:tracking-[-0.52px]'
 const leadClass = 'text-sm leading-[21px] tracking-[0.28px] text-muted lg:text-base lg:leading-6 lg:tracking-[0.32px]'
 const groupHead = 'text-sm font-medium tracking-[0.28px] text-ink'
 const chipClass =
   'inline-flex h-[33px] items-center gap-1.5 rounded-full border border-outline px-3.5 text-sm tracking-[0.28px] text-ink transition-colors'
-const nextButton = 'h-[45px] w-full text-[15px] sm:w-[200px]'
+const nextButton = 'h-[52px] px-5 text-[15px] lg:h-[45px] lg:w-[200px]'
 
 interface PanelCopy {
   eyebrow: string
@@ -129,18 +129,18 @@ export function OnboardingPage(handle: Handle<{ shell: Shell; view: OnboardingVi
           <header class={cn(pageX, 'flex h-[60px] shrink-0 items-center justify-between lg:h-[72px]')}>
             <Logo />
             <a href={routes.home.href()} class="flex items-center gap-1.5 text-sm tracking-[0.28px] text-muted hover:text-ink">
-              Lewati untuk sekarang
-              <Icon name="arrow-right" size={16} />
+              Lewati<span class="max-sm:hidden"> untuk sekarang</span>
+              <Icon name="arrow-right" size={16} class="max-sm:hidden" />
             </a>
           </header>
           <main
             id="konten"
             class={cn(
               pageX,
-              'flex flex-1 flex-col pt-8 pb-10 lg:grid lg:grid-cols-[minmax(0,428px)_minmax(0,668px)] lg:justify-between lg:gap-12 lg:pt-2',
+              'flex flex-1 flex-col pt-4 pb-32 lg:grid lg:grid-cols-[minmax(0,428px)_minmax(0,668px)] lg:justify-between lg:gap-12 lg:pt-2',
             )}
           >
-            <div class="flex flex-col gap-10 lg:justify-center lg:py-10">
+            <div class="flex flex-col gap-8 lg:justify-center lg:gap-10 lg:py-10">
               <div class="flex flex-col gap-3">
                 <StepProgress step={view.step} />
                 <h1 class={headingClass}>{content.title}</h1>
@@ -186,42 +186,59 @@ function StepProgress(handle: Handle<{ step: OnboardingStep }>) {
   return () => {
     let current = stepNumber(handle.props.step)
     return (
-      <p class="flex items-center gap-2.5 text-xs tracking-[0.24px] text-muted">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-2.5">
         <span class="flex gap-1.5" aria-hidden="true">
           {[1, 2, 3, 4].map((n) => (
-            <span key={n} class={cn('h-1 w-6 rounded-full', n <= current ? 'bg-accent' : 'bg-line-strong')} />
+            <span
+              key={n}
+              class={cn('h-[3px] flex-1 rounded-full lg:h-1 lg:w-6 lg:flex-none', n <= current ? 'bg-accent' : 'bg-line lg:bg-line-strong')}
+            />
           ))}
         </span>
-        Langkah {current} dari 4
-      </p>
+        <p class="text-xs font-medium tracking-[0.24px] text-accent-strong lg:font-normal lg:text-muted">Langkah {current} dari 4</p>
+      </div>
     )
   }
 }
 
-/** Footer row of each step: a status note or "Kembali" on the left, "Lanjut" on the right. */
+/** Footer row of each step: a status note or "Kembali" on the left, the main button on the right. Pinned to the bottom on phones. */
+function ActionBar(handle: Handle<{ children?: RemixNode }>) {
+  return () => (
+    <div class="fixed inset-x-0 bottom-0 z-10 bg-bg/95 px-5 pt-4 pb-6 shadow-[0_-12px_24px_#FFFFFF] backdrop-blur lg:static lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none">
+      <div class="flex items-center justify-between gap-4">{handle.props.children}</div>
+    </div>
+  )
+}
+
 function StepActions(handle: Handle<{ step: OnboardingStep; note?: string; label?: string }>) {
   return () => {
     let { step, note, label = 'Lanjut' } = handle.props
     let back = previousStep(step)
     return (
-      <div class="flex flex-col-reverse items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <ActionBar>
         {note ? (
-          <p class="text-center text-sm tracking-[0.28px] text-muted sm:text-left">{note}</p>
+          <p class="text-[13px] tracking-[0.26px] text-muted lg:text-sm">{note}</p>
         ) : back ? (
-          <a href={onboardingHref(back)} class="flex items-center justify-center gap-1.5 text-sm tracking-[0.28px] text-muted hover:text-ink">
-            <Icon name="arrow-left" size={16} />
-            Kembali
-          </a>
+          <BackLink step={back} />
         ) : (
           <span />
         )}
         <Button type="submit" name="lanjut" value="1" class={nextButton}>
-          {label}
           <Icon name="arrow-right" />
+          {label}
         </Button>
-      </div>
+      </ActionBar>
     )
   }
+}
+
+function BackLink(handle: Handle<{ step: OnboardingStep }>) {
+  return () => (
+    <a href={onboardingHref(handle.props.step)} class="flex items-center gap-1.5 text-sm tracking-[0.28px] text-muted hover:text-ink">
+      <Icon name="arrow-left" size={16} />
+      Kembali
+    </a>
+  )
 }
 
 function StepForm(handle: Handle<{ shell: Shell; step: OnboardingStep; children?: RemixNode }>) {
@@ -244,7 +261,7 @@ function TasteStep(handle: Handle<{ shell: Shell; view: Extract<OnboardingView, 
       <StepForm shell={shell} step="selera">
         <fieldset class="flex flex-col gap-3.5">
           <legend class={cn(groupHead, 'mb-3.5')}>Kategori favorit</legend>
-          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div class="grid grid-cols-3 gap-2.5 lg:gap-3">
             {view.tiles.map((tile) => (
               <label
                 key={tile.id}
@@ -343,7 +360,7 @@ function PantryStep(handle: Handle<{ shell: Shell; view: Extract<OnboardingView,
           <input key={ingredient.id} type="hidden" name="bahan" value={ingredient.id} />
         ))}
         <div class="flex flex-col gap-8">
-          <div class="flex h-[52px] items-center gap-2.5 rounded-md border border-outline bg-hover pr-[7px] pl-4 focus-within:bg-bg">
+          <div class="flex h-[52px] items-center gap-2.5 rounded-md border border-transparent bg-hover lg:border-outline pr-[7px] pl-4 focus-within:bg-bg">
             <Icon name="search" size={18} class="shrink-0 text-muted" />
             <label for="tambah-bahan" class="sr-only">
               Tambah bahan
@@ -592,7 +609,11 @@ function DoneStep(handle: Handle<{ view: Extract<OnboardingView, { step: 'selesa
       },
     ]
     return (
-      <div class="flex flex-col gap-10">
+      <div class="flex flex-col gap-6 lg:gap-10">
+        <p class="flex items-center gap-4 rounded-lg bg-surface-dark bg-[radial-gradient(ellipse_80%_90%_at_100%_100%,#D2693F59_0%,#D2693F00_100%)] px-6 py-5 text-white lg:hidden">
+          <span class="text-[52px] leading-none tracking-[-1px]">{view.shownCount}</span>
+          <span class="text-[13px] leading-5 tracking-[0.26px] text-white/85">resep cocok untukmu sudah menunggu di berandamu</span>
+        </p>
         <ul class="flex flex-col rounded-md bg-subtle px-[18px] py-1">
           {rows.map((row) => (
             <li key={row.label} class="flex items-center gap-3.5 border-b border-line py-3.5 last:border-b-0">
@@ -609,16 +630,13 @@ function DoneStep(handle: Handle<{ view: Extract<OnboardingView, { step: 'selesa
             </li>
           ))}
         </ul>
-        <div class="flex flex-col-reverse items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <a href={onboardingHref('pantangan')} class="flex items-center justify-center gap-1.5 text-sm tracking-[0.28px] text-muted hover:text-ink">
-            <Icon name="arrow-left" size={16} />
-            Kembali
-          </a>
+        <ActionBar>
+          <BackLink step="pantangan" />
           <ButtonLink href={`${routes.home.href()}?tab=untukmu#inspirasi`} class={nextButton}>
-            Mulai Jelajahi
             <Icon name="arrow-right" />
+            Mulai Jelajahi
           </ButtonLink>
-        </div>
+        </ActionBar>
       </div>
     )
   }

@@ -52,7 +52,7 @@ export function IngredientPage(handle: Handle<IngredientPageProps>) {
           />
 
           <div class="grid items-center gap-8 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:gap-14">
-            <div class="aspect-[560/460] overflow-hidden rounded-lg bg-subtle">
+            <div class="-mx-5 -mt-5 aspect-[390/270] overflow-hidden bg-subtle md:-mx-10 lg:mx-0 lg:mt-0 lg:aspect-[560/460] lg:rounded-lg">
               {ingredient.imageUrl ? (
                 <img src={ingredient.imageUrl} alt={name} class="size-full object-cover" />
               ) : (
@@ -79,7 +79,7 @@ export function IngredientPage(handle: Handle<IngredientPageProps>) {
                   <dd class="text-lg tracking-[-0.2px] lg:text-xl">{substitutes.length} bahan</dd>
                 </div>
               </dl>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <ButtonLink href={`${routes.pantry.index.href()}?bahan=${ingredient.id}`} variant="default" size="lg">
                   <Icon name="refrigerator" />
                   Masak dengan {name}
@@ -97,7 +97,7 @@ export function IngredientPage(handle: Handle<IngredientPageProps>) {
                   ) : (
                     <form method="post" action={routes.ingredients.addToPantry.href({ id: ingredient.id })}>
                       <CsrfField token={shell.csrfToken} />
-                      <Button type="submit" variant="ghost" size="lg">
+                      <Button type="submit" variant="ghost" size="lg" class="w-full sm:w-auto">
                         <Icon name="plus" />
                         Tambah ke dapurku
                       </Button>

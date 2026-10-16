@@ -773,7 +773,7 @@ function Pricing(_handle: Handle) {
             </ul>
             <FreePlanStrip />
           </div>
-          <ul class="flex flex-wrap justify-center gap-x-7 gap-y-3">
+          <ul class="flex flex-col gap-x-7 gap-y-3 sm:flex-row sm:flex-wrap sm:justify-center">
             {notes.map((note) => (
               <li key={note.text} class="flex items-center gap-2 text-sm tracking-[0.01em] text-muted">
                 <Icon name={note.icon} />
