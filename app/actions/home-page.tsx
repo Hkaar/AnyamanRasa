@@ -30,6 +30,9 @@ export interface HomePageProps {
   pantryMatches: PantryMatch<PantryRecipe>[]
   pantryMatchCount: number
   graph: GraphNeighborhood | null
+  /** "Untukmu" recipes from the viewer's onboarding preferences, or null when they have none. */
+  forYou: RecipeSummary[] | null
+  forYouActive: boolean
 }
 
 const TABS: { key: HomeTab; label: string }[] = [
@@ -51,7 +54,11 @@ export function HomePage(handle: Handle<HomePageProps>) {
       <SiteLayout shell={shell} active="home">
         <Hero featured={featured} />
         <Highlights recipes={recipes} featured={featured} />
-        <Inspiration tab={handle.props.tab} recipes={recipes} />
+        <Inspiration
+          tab={handle.props.forYouActive ? 'untukmu' : handle.props.tab}
+          recipes={handle.props.forYouActive ? (handle.props.forYou ?? []) : recipes}
+          personalised={handle.props.forYou !== null}
+        />
         <PantryIntro
           pantry={handle.props.pantry}
           suggestions={handle.props.suggestions}
@@ -370,10 +377,11 @@ function HighlightCard(handle: Handle<{ card: Highlight }>) {
   }
 }
 
-function Inspiration(handle: Handle<{ tab: HomeTab; recipes: RecipeSummary[] }>) {
+function Inspiration(handle: Handle<{ tab: HomeTab | 'untukmu'; recipes: RecipeSummary[]; personalised: boolean }>) {
   return () => {
-    let { tab, recipes } = handle.props
+    let { tab, recipes, personalised } = handle.props
     let [first, ...rest] = recipes
+    let tabs: { key: HomeTab | 'untukmu'; label: string }[] = personalised ? [{ key: 'untukmu', label: 'Untukmu' }, ...TABS] : TABS
     return (
       <section aria-labelledby="inspirasi" class="scroll-mt-[60px] bg-hover [--card-hover:var(--color-bg)] lg:scroll-mt-[72px]">
         <div class={cn(pageX, 'flex flex-col gap-8 py-14 lg:gap-16 lg:pt-32 lg:pb-[136px]')}>
@@ -397,7 +405,7 @@ function Inspiration(handle: Handle<{ tab: HomeTab; recipes: RecipeSummary[] }>)
             </div>
             <nav aria-label="Urutan inspirasi" class="border-b border-line pb-5">
               <ul class={tabsListClass}>
-                {TABS.map((item) => (
+                {tabs.map((item) => (
                   <li key={item.key}>
                     <a
                       href={item.key === 'populer' ? '/#inspirasi' : `/?tab=${item.key}#inspirasi`}
@@ -410,7 +418,23 @@ function Inspiration(handle: Handle<{ tab: HomeTab; recipes: RecipeSummary[] }>)
                 ))}
               </ul>
             </nav>
+            {tab === 'untukmu' && (
+              <p class="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted lg:-mt-4">
+                Disusun dari kategori favorit dan pantanganmu.
+                <a href={routes.onboarding.index.href()} class="font-medium text-accent-strong hover:underline">
+                  Ubah selera
+                </a>
+              </p>
+            )}
           </div>
+          {recipes.length === 0 && (
+            <p class="rounded-md bg-bg px-6 py-12 text-center text-muted">
+              Belum ada resep yang cocok dengan pilihanmu.{' '}
+              <a href={routes.onboarding.index.href()} class="text-accent-strong hover:underline">
+                Ubah selera
+              </a>
+            </p>
+          )}
           {/* Desktop: 3-column grid. Mobile: one large card then a 2-column grid. */}
           <div class="hidden grid-cols-2 gap-x-6 gap-y-14 md:grid lg:grid-cols-3" data-reveal-group>
             {recipes.map((recipe) => (
@@ -637,22 +661,7 @@ interface Plan {
   featured?: boolean
 }
 
-const PLANS: Plan[] = [
-  {
-    name: 'Gratis',
-    description: 'Untuk kamu yang baru mulai menjelajah dapur Nusantara.',
-    monthly: 'Rp0',
-    yearly: 'Rp0',
-    href: routes.auth.register.index.href(),
-    cta: 'Mulai Gratis',
-    featuresLabel: 'Termasuk',
-    features: [
-      'Jelajahi ribuan resep komunitas',
-      'Cari resep dari bahan di dapurmu',
-      'Simpan hingga 20 resep',
-      'Tulis & bagikan resepmu',
-    ],
-  },
+const PAID: Plan[] = [
   {
     name: 'Dapur Plus',
     description: 'Untuk juru masak rumahan yang ingin dapurnya lebih teratur.',
@@ -679,8 +688,25 @@ const PLANS: Plan[] = [
     href: `${routes.subscription.index.href()}?paket=keluarga`,
     cta: 'Pilih Keluarga',
     featuresLabel: 'Termasuk',
-    features: ['Semua fitur Dapur Plus', 'Hingga 5 anggota keluarga', 'Koleksi resep bersama', 'Daftar belanja bersama'],
+    features: SUBSCRIPTION_PLANS.keluarga.features,
   },
+  {
+    name: 'Dapur Usaha',
+    description: SUBSCRIPTION_PLANS.usaha.description,
+    monthly: formatRupiah(SUBSCRIPTION_PLANS.usaha.monthly),
+    yearly: formatRupiah(SUBSCRIPTION_PLANS.usaha.yearly),
+    href: `${routes.subscription.index.href()}?paket=usaha`,
+    cta: 'Pilih Dapur Usaha',
+    featuresLabel: 'Termasuk',
+    features: SUBSCRIPTION_PLANS.usaha.features,
+  },
+]
+
+const FREE_FEATURES = [
+  'Jelajahi ribuan resep komunitas',
+  'Cari resep dari bahan di dapurmu',
+  'Simpan hingga 20 resep',
+  'Tulis & bagikan resepmu',
 ]
 
 const BILLING = [
@@ -737,13 +763,16 @@ function Pricing(_handle: Handle) {
               ))}
             </fieldset>
           </div>
-          <ul class="grid items-center gap-4 lg:grid-cols-3 lg:gap-6" data-reveal-group>
-            {PLANS.map((plan) => (
-              <li key={plan.name}>
-                <PlanCard plan={plan} />
-              </li>
-            ))}
-          </ul>
+          <div class="flex flex-col gap-4 lg:gap-6">
+            <ul class="grid items-start gap-4 lg:grid-cols-3 lg:gap-6" data-reveal-group>
+              {PAID.map((plan) => (
+                <li key={plan.name}>
+                  <PlanCard plan={plan} />
+                </li>
+              ))}
+            </ul>
+            <FreePlanStrip />
+          </div>
           <ul class="flex flex-wrap justify-center gap-x-7 gap-y-3">
             {notes.map((note) => (
               <li key={note.text} class="flex items-center gap-2 text-sm tracking-[0.01em] text-muted">
@@ -762,7 +791,6 @@ function PlanCard(handle: Handle<{ plan: Plan }>) {
   return () => {
     let { plan } = handle.props
     let dark = plan.featured === true
-    let free = plan.monthly === 'Rp0'
     let unit = cn('text-[15px] leading-6', dark ? 'text-white/70' : 'text-muted')
     return (
       <article
@@ -782,23 +810,14 @@ function PlanCard(handle: Handle<{ plan: Plan }>) {
           </div>
           <p class={cn('text-[15px] leading-[23px]', dark ? 'text-white/70' : 'text-muted')}>{plan.description}</p>
           <p class="flex items-end gap-1.5">
-            {free ? (
-              <>
-                <span class="text-[44px] leading-none tracking-[-0.52px] lg:text-[52px]">{plan.monthly}</span>
-                <span class={unit}>/selamanya</span>
-              </>
-            ) : (
-              <>
-                <span class="text-[44px] leading-none tracking-[-0.52px] group-has-[#tagihan-tahunan:checked]/billing:hidden lg:text-[52px]">
-                  {plan.monthly}
-                </span>
-                <span class={cn(unit, 'group-has-[#tagihan-tahunan:checked]/billing:hidden')}>/bulan</span>
-                <span class="hidden text-[44px] leading-none tracking-[-0.52px] group-has-[#tagihan-tahunan:checked]/billing:inline lg:text-[52px]">
-                  {plan.yearly}
-                </span>
-                <span class={cn(unit, 'hidden group-has-[#tagihan-tahunan:checked]/billing:inline')}>/tahun</span>
-              </>
-            )}
+            <span class="text-[44px] leading-none tracking-[-0.52px] group-has-[#tagihan-tahunan:checked]/billing:hidden lg:text-[52px]">
+              {plan.monthly}
+            </span>
+            <span class={cn(unit, 'group-has-[#tagihan-tahunan:checked]/billing:hidden')}>/bulan</span>
+            <span class="hidden text-[44px] leading-none tracking-[-0.52px] group-has-[#tagihan-tahunan:checked]/billing:inline lg:text-[52px]">
+              {plan.yearly}
+            </span>
+            <span class={cn(unit, 'hidden group-has-[#tagihan-tahunan:checked]/billing:inline')}>/tahun</span>
           </p>
           <ButtonLink
             href={plan.href}
@@ -832,6 +851,42 @@ function PlanCard(handle: Handle<{ plan: Plan }>) {
       </article>
     )
   }
+}
+
+/** pen.dev "Plan Gratis Strip": the free plan as a full-width row under the paid cards. */
+function FreePlanStrip(_handle: Handle) {
+  return () => (
+    <article
+      class="flex flex-col gap-7 rounded-lg border border-line bg-bg p-7 lg:flex-row lg:items-center lg:gap-10 lg:px-10 lg:py-8"
+      data-reveal
+    >
+      <div class="flex flex-col gap-4 lg:w-[280px] lg:shrink-0">
+        <h3 class="self-start rounded-full bg-hover px-3.5 py-1.5 text-[13px] tracking-[0.02em]">Gratis</h3>
+        <p class="text-[15px] leading-[23px] text-muted">Belum siap berlangganan? Mulai dengan akses gratis, selamanya.</p>
+        <p class="flex items-end gap-1.5">
+          <span class="text-[40px] leading-none tracking-[-0.4px]">Rp0</span>
+          <span class="text-[15px] leading-6 text-muted">/selamanya</span>
+        </p>
+      </div>
+      <div class="h-px bg-line lg:h-24 lg:w-px lg:shrink-0" />
+      <div class="flex flex-1 flex-col gap-4">
+        <p class="text-[13px] tracking-[0.02em] text-muted">Termasuk</p>
+        <ul class="grid gap-x-8 gap-y-3.5 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-2">
+          {FREE_FEATURES.map((feature) => (
+            <li key={feature} class="flex items-center gap-3 text-[15px] leading-[21px]">
+              <span class="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent-strong">
+                <Icon name="check" size={13} />
+              </span>
+              {feature}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <ButtonLink href={routes.auth.register.index.href()} variant="outline" size="lg" class="lg:w-[200px] lg:shrink-0">
+        Mulai Gratis
+      </ButtonLink>
+    </article>
+  )
 }
 
 const FAQ: { question: string; answer: RemixNode }[] = [

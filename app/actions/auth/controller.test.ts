@@ -89,6 +89,7 @@ describe('authentication', () => {
 
     let response = await client.post('/daftar', { ...account, ...CONSENT })
     assert.equal(response.status, 303)
+    assert.equal(response.headers.get('Location'), '/mulai')
     assert.match(await (await client.get('/u/koki_uji')).text(), /Edit profil/)
 
     let duplicate = await createClient().post('/daftar', {
@@ -153,7 +154,7 @@ describe('google sign-in', () => {
 
     let created = await client.post('/daftar/ketentuan', CONSENT)
     assert.equal(created.status, 303)
-    assert.equal(created.headers.get('Location'), '/profil/ubah')
+    assert.equal(created.headers.get('Location'), '/mulai')
     assert.equal((await createClient().get('/daftar/ketentuan')).headers.get('Location'), '/daftar')
 
     let settings = await (await client.get('/profil/ubah')).text()

@@ -1,6 +1,8 @@
 import { type SqlStatement, sql } from 'remix/data-table'
 
 import { type Database, joinSql, queryRow, queryRows } from '../db.ts'
+import type { FeedCandidate } from '../domain/onboarding.ts'
+import type { PantryIngredient } from '../domain/pantry.ts'
 import type {
   Difficulty,
   ExplicitRelation,
@@ -659,4 +661,25 @@ export async function listCategoriesForIngredient(
         where ri.ingredient_id = ${ingredientId}
         group by c.id order by count(*) desc, c.id limit ${limit}`,
   )
+}
+
+// ---------------------------------------------------------------------------
+// "Untukmu" feed (onboarding preferences)
+
+/**
+ * Published recipes in popularity order with their category ids and ingredients, for
+ * buildFeed() in app/domain/onboarding.ts.
+ */
+export async function listFeedCandidates(db: Database, limit = 200): Promise<FeedCandidate<RecipeSummary>[]> {
+  let rows = await queryRows<SummaryRow & { category_ids: number[]; ingredients: PantryIngredient[] | null }>(
+    db,
+    sql`select ${summaryColumns},
+          coalesce((select array_agg(rc.category_id) from recipe_categories rc where rc.recipe_id = r.id), '{}') as category_ids,
+          (select json_agg(json_build_object('id', i.id, 'name', i.name) order by ri.position)
+            from recipe_ingredients ri join ingredients i on i.id = ri.ingredient_id
+            where ri.recipe_id = r.id) as ingredients
+        from recipes r ${summaryJoins}
+        where r.status = 'published' order by ${saveCount} desc, r.created_at desc, r.id limit ${limit}`,
+  )
+  return rows.map((row) => ({ recipe: toSummary(row), categoryIds: row.category_ids, ingredients: row.ingredients ?? [] }))
 }

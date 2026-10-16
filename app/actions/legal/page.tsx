@@ -260,6 +260,7 @@ const COMPANY: [IconName, string, RemixNode][] = [
 const PLANS = [
   { name: 'Dapur Plus', price: 'Rp29.000', note: '1 akun · bisa dibayar tahunan', tone: 'bg-subtle' },
   { name: 'Keluarga', price: 'Rp49.000', note: 'Hingga 5 anggota keluarga', tone: 'bg-lilac' },
+  { name: 'Dapur Usaha', price: 'Rp99.000', note: 'Hingga 10 akun staf dapur', tone: 'bg-success-subtle' },
 ]
 
 const PAYMENT_METHODS: [IconName, string][] = [
@@ -278,7 +279,7 @@ const TERMS: Document = {
   summary: [
     'Resep yang kamu tulis tetap milikmu. Kami hanya meminta izin untuk menampilkannya di AnyamanRasa.',
     'Orang lain boleh membuat variasi dari resepmu yang sudah terbit, dan namamu selalu dicantumkan.',
-    'Langganan Dapur Plus dan Keluarga masih berupa simulasi: belum ada tagihan sungguhan.',
+    'Langganan Dapur Plus, Keluarga, dan Dapur Usaha masih berupa simulasi: belum ada tagihan sungguhan.',
     'Bersikap baik, jangan menjiplak, dan jangan membagikan klaim kesehatan yang menyesatkan.',
   ],
   aside: {
@@ -350,8 +351,8 @@ const TERMS: Document = {
       title: 'Langganan & pembayaran',
       body: () => (
         <>
-          <P>Fitur dasar AnyamanRasa gratis. Kami juga menyiapkan dua paket berlangganan:</P>
-          <div class="grid gap-3 sm:grid-cols-2">
+          <P>Fitur dasar AnyamanRasa gratis. Kami juga menyiapkan tiga paket berlangganan:</P>
+          <div class="grid gap-3 sm:grid-cols-3">
             {PLANS.map((plan) => (
               <div key={plan.name} class={cn('flex flex-col gap-1.5 rounded-md px-5 py-[18px]', plan.tone)}>
                 <p class="text-sm font-medium text-accent-strong">{plan.name}</p>

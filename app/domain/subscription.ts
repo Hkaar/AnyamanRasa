@@ -1,7 +1,7 @@
-// Dapur Plus / Keluarga plans and the simulated checkout (pen.dev 14a–14d). Nothing is stored or
+// Dapur Plus / Keluarga / Dapur Usaha plans and the simulated checkout (pen.dev 14a–14d). Nothing is stored or
 // charged: the checkout is a walkthrough, so every step is derived from its query/form values.
 
-export type PaidPlanId = 'plus' | 'keluarga'
+export type PaidPlanId = 'plus' | 'keluarga' | 'usaha'
 export type Period = 'bulanan' | 'tahunan'
 export type PaymentMethod = 'qris' | 'gopay' | 'ovo' | 'dana' | 'kartu'
 
@@ -53,9 +53,19 @@ export const PLANS: Record<Plan['id'], Plan> = {
     features: ['Semua fitur Dapur Plus', 'Hingga 5 anggota keluarga', 'Koleksi resep bersama', 'Daftar belanja bersama'],
     seats: 'hingga 5 anggota',
   },
+  usaha: {
+    id: 'usaha',
+    name: 'Dapur Usaha',
+    description: 'Untuk katering, warung, dan usaha kuliner rumahan.',
+    monthly: 99_000,
+    yearly: 990_000,
+    highlights: ['Hitung HPP & porsi', 'Hingga 10 akun staf', 'Dukungan prioritas'],
+    features: ['Semua fitur Keluarga', 'Hitung HPP & porsi otomatis', 'Hingga 10 akun staf dapur', 'Dukungan prioritas via WhatsApp'],
+    seats: 'hingga 10 akun staf',
+  },
 }
 
-export const PAID_PLANS: PaidPlanId[] = ['plus', 'keluarga']
+export const PAID_PLANS: PaidPlanId[] = ['plus', 'keluarga', 'usaha']
 export const PERIODS: Period[] = ['bulanan', 'tahunan']
 
 export const PAYMENT_METHODS: { id: PaymentMethod; label: string; wallet: boolean }[] = [

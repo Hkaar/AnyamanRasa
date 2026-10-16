@@ -39,7 +39,7 @@ export default createController(routes.auth.consent, {
 
       signIn(context, link.viewer.id)
       setFlash(context, { message: `Selamat datang, ${link.viewer.name}! Atur nama pengguna dan profilmu di sini.` })
-      return redirect(routes.profile.edit.index.href(), 303)
+      return redirect(routes.onboarding.index.href(), 303)
     },
   },
 })

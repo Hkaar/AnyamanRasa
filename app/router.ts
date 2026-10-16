@@ -14,6 +14,7 @@ import controller from './actions/controller.tsx'
 import graphController from './actions/graph/controller.tsx'
 import ingredientsController from './actions/ingredients/controller.tsx'
 import legalController from './actions/legal/controller.tsx'
+import onboardingController from './actions/onboarding/controller.tsx'
 import pantryController from './actions/pantry/controller.tsx'
 import profileController from './actions/profile/controller.tsx'
 import profileEditController from './actions/profile/edit/controller.tsx'
@@ -172,6 +173,7 @@ router.map(routes.auth, authController)
 router.map(routes.auth.login, loginController)
 router.map(routes.auth.register, registerController)
 router.map(routes.auth.consent, consentController)
+router.map(routes.onboarding, onboardingController)
 router.map(routes.profile, profileController)
 router.map(routes.profile.edit, profileEditController)
 router.map(routes.legal, legalController)

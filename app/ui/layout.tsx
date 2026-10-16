@@ -378,7 +378,7 @@ function SiteFooter() {
         ],
       },
       {
-        title: 'Tentang',
+        title: 'Legal',
         links: [
           { label: 'Syarat & Ketentuan', href: routes.legal.terms.href() },
           { label: 'Kebijakan Privasi', href: routes.legal.privacy.href() },

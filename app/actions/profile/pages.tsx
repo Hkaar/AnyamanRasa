@@ -5,7 +5,7 @@ import type { Profile } from '../../data/users.ts'
 import { formatMonthYear } from '../../domain/format.ts'
 import type { RecipeSummary } from '../../domain/types.ts'
 import type { FieldErrors } from '../../domain/validation.ts'
-import { FREE_SAVE_LIMIT, PLANS, formatRupiah } from '../../domain/subscription.ts'
+import { FREE_SAVE_LIMIT, PAID_PLANS, PLANS, formatRupiah } from '../../domain/subscription.ts'
 import { routes } from '../../routes.ts'
 import { Icon, type IconName } from '../../ui/icon.tsx'
 import { SiteLayout } from '../../ui/layout.tsx'
@@ -547,8 +547,8 @@ function SubscriptionSettings(handle: Handle<{ savedCount: number }>) {
         </div>
         <SavedMeter count={handle.props.savedCount} />
       </div>
-      <div class="grid gap-3 sm:grid-cols-2">
-        {(['plus', 'keluarga'] as const).map((id) => {
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {PAID_PLANS.map((id) => {
           let plan = PLANS[id]
           let featured = id === 'plus'
           return (
@@ -580,7 +580,7 @@ function SubscriptionSettings(handle: Handle<{ savedCount: number }>) {
                 class={featured ? undefined : 'bg-bg hover:bg-hover'}
               >
                 {featured && <Icon name="sparkles" />}
-                {featured ? 'Upgrade ke Dapur Plus' : 'Pilih Keluarga'}
+                {featured ? 'Upgrade ke Dapur Plus' : `Pilih ${plan.name}`}
               </ButtonLink>
             </article>
           )

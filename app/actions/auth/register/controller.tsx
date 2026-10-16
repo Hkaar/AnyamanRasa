@@ -77,7 +77,8 @@ export default createController(routes.auth.register, {
         message: 'Akun berhasil dibuat. Lengkapi profilmu kapan saja.',
         action: { label: 'Atur profil', href: routes.profile.edit.index.href() },
       })
-      return redirect(routes.home.href(), 303)
+      // Onboarding (pen.dev 15a–15d) first; the flash shows once they reach the site.
+      return redirect(routes.onboarding.index.href(), 303)
     },
   },
 })

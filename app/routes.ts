@@ -35,6 +35,7 @@ export const routes = route({
     googleCallback: get('/masuk/google/callback'),
     usernameCheck: get('/api/nama-pengguna'),
   },
+  onboarding: form('/mulai'),
   profile: {
     show: get('/u/:username'),
     edit: form('/profil/ubah'),

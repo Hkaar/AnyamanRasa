@@ -18,7 +18,8 @@ Scope comes from SKPL-IFPAGI01, plus the extra designed features approved on 202
 | F-10.1, F-10.2 | All six relationship types supported; labels shown in lists, graph and panels | everywhere |
 | Admin (TAB-2) | Archive / restore published recipes, filters, stats, CSV export | `/admin/resep` |
 | — | Legal pages (pen.dev 13a/13b), adapted to what the app actually stores and does | `/syarat-ketentuan`, `/kebijakan-privasi` |
-| — | Simulated Dapur Plus / Keluarga checkout (pen.dev 14a–14d): plan, billing period, payment method, promo code `DAPURBARU`, waiting and receipt screens. Nothing is stored or charged; every account stays on Gratis. Settings shows "Langganan & tagihan" and the own profile an upgrade banner with the saved-recipe meter (n / 20, informational) | `/langganan`, `/profil/ubah#langganan` |
+| — | Onboarding after sign-up (pen.dev 15a–15d): favourite categories (at least 3), the pantry and ingredients to avoid, each with a live preview, and a summary. The home page gains an "Untukmu" tab that favours those categories and hides recipes using an avoided ingredient | `/mulai`, `/?tab=untukmu` |
+| — | Simulated Dapur Plus / Keluarga / Dapur Usaha checkout (pen.dev 14a–14d): plan, billing period, payment method, promo code `DAPURBARU`, waiting and receipt screens. Nothing is stored or charged; every account stays on Gratis. Settings shows "Langganan & tagihan" and the own profile an upgrade banner with the saved-recipe meter (n / 20, informational) | `/langganan`, `/profil/ubah#langganan` |
 | Extras | Bookmarks, saved pantry ("Dapurku"), servings scaler, "Salin daftar belanja", share | detail, pantry, ingredient pages |
 
 ## Deliberately not implemented
@@ -30,7 +31,8 @@ These appear in the designs or the SKPL but have no supporting data, scope or de
 - **Ingredient storage and availability facts**, and ingredient type tags. They aren't in the data model.
 - **Tips box on recipes.** There's no column for it and no editor input.
 - **Real subscriptions.** The checkout is a walkthrough by decision of 2026-10-15: no subscription data, payment provider, saved payment methods, billing history or plan features (menu planner, automatic shopping list, family sharing). The Gratis 20-recipe save limit is shown but not enforced, and the optional weekly-email box on the consent step is omitted.
-- **Settings beyond the profile (09b).** Diet and allergy preferences, spice level, units, default servings, notifications, privacy switches, two-step verification, a website field, password change and account deletion have no data or flows behind them. The settings page keeps the public profile, the sign-in email and signing out.
+- **Onboarding parts without data (15a, 15c).** Regional cuisines (Minang, Jawa…) become existing categories because recipes have no region. The diet choice (halal, vegetarian, low sugar) is left out because no recipe data supports it, and allergies are covered only by avoiding ingredients. Email sign-ups that must confirm their address skip onboarding, but it stays open at `/mulai` ("Ubah selera" on the home page).
+- **Settings beyond the profile (09b).** Diet preferences, spice level, units, default servings, notifications, privacy switches, two-step verification, a website field, password change and account deletion have no data or flows behind them. The settings page keeps the public profile, the sign-in email and signing out.
 - **Offline cache (12c).** There is no service worker, so the offline banner only says what still works; it doesn't promise saved recipes or a retry countdown.
 - **Draft autosave and preview.** Replaced by an explicit "Simpan Draf". The owner can open the draft page to preview it.
 - **Admin sections other than Recipes** (Ingredients, Users, Moderation). They aren't designed.

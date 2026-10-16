@@ -70,6 +70,15 @@ No relationship is ever created from similarity scores or embeddings (SKPL §2.4
 
 An email already linked to a different identity is refused.
 
+## Onboarding preferences (`0004`)
+
+| Table | Why |
+| --- | --- |
+| `user_favorite_categories(user_id, category_id)` | Onboarding step 1 (pen.dev 15a): favourite kinds of dishes. The design shows regional cuisines, but recipes have no region data, so the step offers existing categories |
+| `user_avoided_ingredients(user_id, ingredient_id)` | Onboarding step 3 (15c): ingredients to avoid. The design's diet options (halal, vegetarian) are left out because no recipe data supports them |
+
+Step 2 (15b) saves to `pantry_items`. The home page's "Untukmu" tab ranks published recipes by how many favourite categories they belong to and leaves out every recipe whose `recipe_ingredients` include an avoided ingredient. Nothing is inferred beyond those stored rows.
+
 ## Status lifecycle
 
 - `draft` → `published`: the author publishes. Drafts are visible only to their author.

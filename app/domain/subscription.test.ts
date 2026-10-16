@@ -18,6 +18,7 @@ describe('subscription', () => {
   it('prices plans like the design (Rp290.000 − 10% = Rp261.000)', () => {
     assert.deepEqual(quote('plus', 'tahunan', 10), { subtotal: 290_000, discount: 29_000, total: 261_000, perMonth: 24_167 })
     assert.equal(quote('keluarga', 'bulanan').total, 49_000)
+    assert.equal(quote('usaha', 'tahunan').total, 990_000)
     assert.equal(yearlySaving('plus'), 17)
     assert.equal(formatRupiah(261_000), 'Rp261.000')
     assert.equal(renewalDate('tahunan', new Date(2026, 9, 15)).getFullYear(), 2027)

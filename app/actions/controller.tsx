@@ -7,12 +7,15 @@ import { loadNeighborhood, mostConnectedRecipeKey } from '../data/graph.ts'
 import { findIngredientsByNames } from '../data/ingredients.ts'
 import { serveMedia } from '../data/media.ts'
 import { findPantryMatches } from '../data/pantry.ts'
-import { type HomeTab, getSiteStats, listHomeRecipes } from '../data/recipes.ts'
+import { getPreferences, toPreferences } from '../data/preferences.ts'
+import { type HomeTab, getSiteStats, listFeedCandidates, listHomeRecipes } from '../data/recipes.ts'
+import { buildFeed, hasPreferences } from '../domain/onboarding.ts'
 import { DEFAULT_EDGE_KINDS } from '../domain/graph.ts'
 import { OAUTH_VERIFIER_KEY } from './auth/sign-in.ts'
 import { routes } from '../routes.ts'
 import { HomePage } from './home-page.tsx'
 import { getShell } from './shell.tsx'
+import type { Database } from '../db.ts'
 
 const HOME_TABS: HomeTab[] = ['populer', 'terbaru', 'cepat']
 // Sample pantry for the homepage preview, matching the design's example.
@@ -45,6 +48,7 @@ export default createController(routes, {
       let db = context.db
       let tabParam = context.url.searchParams.get('tab')
       let tab = HOME_TABS.find((value) => value === tabParam) ?? 'populer'
+      let forYou = context.viewer ? await loadForYou(db, context.viewer.id) : null
 
       let [recipes, featuredList, stats, pantryIngredients, suggestionIngredients, graphCenter] =
         await Promise.all([
@@ -89,8 +93,17 @@ export default createController(routes, {
           pantryMatches={pantryMatches.slice(0, 3)}
           pantryMatchCount={pantryMatches.length}
           graph={graph}
+          forYou={forYou}
+          forYouActive={forYou !== null && tabParam === 'untukmu'}
         />,
       )
     },
   },
 })
+
+/** The "Untukmu" tab (onboarding preferences), or null when the viewer has none. */
+async function loadForYou(db: Database, userId: string) {
+  let preferences = toPreferences(await getPreferences(db, userId))
+  if (!hasPreferences(preferences)) return null
+  return buildFeed(await listFeedCandidates(db), preferences).shown.slice(0, 6)
+}

@@ -252,7 +252,7 @@ export function PlanPage(handle: Handle<{ shell: Shell; checkout: Checkout }>) {
               <legend class={sectionTitle}>Paket</legend>
               <span class={sectionNote}>Harga sudah termasuk PPN</span>
             </div>
-            <div class="grid gap-3 md:grid-cols-3">
+            <div class="grid gap-3 sm:grid-cols-2">
               <div class="flex flex-col gap-4 rounded-md bg-subtle p-5" aria-label="Gratis, paket saat ini">
                 <span class="flex items-center justify-between gap-2">
                   <span class="flex items-center gap-2.5 text-[15px] font-medium text-ink">
