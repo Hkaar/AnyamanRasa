@@ -5,15 +5,28 @@ import type { Handle, RemixNode } from 'remix/component'
 import { Icon, type IconName } from './icon.tsx'
 import { cn } from './utils.ts'
 
-export function Logo(handle: Handle<{ href?: string; class?: string; inverted?: boolean }>) {
+/** `large` is the onboarding welcome mark (pen.dev 15a). */
+export function Logo(handle: Handle<{ href?: string; class?: string; inverted?: boolean; large?: boolean }>) {
   return () => (
     <a
       href={handle.props.href ?? '/'}
-      class={cn('inline-flex shrink-0 items-center gap-2 rounded-md', handle.props.class)}
+      class={cn('inline-flex shrink-0 items-center gap-2 rounded-md', handle.props.large && 'gap-3', handle.props.class)}
       aria-label="AnyamanRasa, ke beranda"
     >
-      <img src={handle.props.inverted ? '/logo-light.png' : '/logo.png'} alt="" width={34} height={28} class="h-7 w-[34px] object-contain" />
-      <span class={cn('text-[17px] font-medium tracking-[-0.4px]', handle.props.inverted ? 'text-white' : 'text-ink')}>
+      <img
+        src={handle.props.inverted ? '/logo-light.png' : '/logo.png'}
+        alt=""
+        width={34}
+        height={28}
+        class={cn('h-7 w-[34px] object-contain', handle.props.large && 'h-[38px] w-[46px] lg:h-12 lg:w-[58px]')}
+      />
+      <span
+        class={cn(
+          'text-[17px] font-medium tracking-[-0.4px]',
+          handle.props.large && 'text-[22px] lg:text-[27px]',
+          handle.props.inverted ? 'text-white' : 'text-ink',
+        )}
+      >
         AnyamanRasa
       </span>
     </a>

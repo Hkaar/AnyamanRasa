@@ -6,6 +6,8 @@ import type { PantryIngredient } from './pantry.ts'
 
 export const ONBOARDING_STEPS = ['selera', 'dapur', 'pantangan', 'selesai'] as const
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]
+/** Steps that ask something ("Langkah X dari 3"); "selesai" is the finish screen. */
+export const QUESTION_STEPS = 3
 
 export const MIN_FAVORITE_CATEGORIES = 3
 export const MAX_AVOIDED_INGREDIENTS = 20
@@ -14,7 +16,7 @@ export function parseStep(raw: unknown): OnboardingStep {
   return ONBOARDING_STEPS.find((step) => step === raw) ?? 'selera'
 }
 
-/** 1-based position for "Langkah X dari 4". */
+/** 1-based position for "Langkah X dari 3". */
 export function stepNumber(step: OnboardingStep): number {
   return ONBOARDING_STEPS.indexOf(step) + 1
 }

@@ -4,6 +4,7 @@ import { createController } from 'remix/router'
 import {
   findIngredientsByNames,
   getIngredientsByIds,
+  listIngredientsUsedWith,
   listPantryItems,
   listPopularIngredients,
   replacePantry,
@@ -27,7 +28,6 @@ import {
   pickCategoryIds,
   validateFavorites,
 } from '../../domain/onboarding.ts'
-import type { PantryIngredient } from '../../domain/pantry.ts'
 import { routes } from '../../routes.ts'
 import type { AppContext } from '../../router.ts'
 import { MAX_PANTRY_INGREDIENTS } from '../pantry/params.ts'
@@ -36,6 +36,8 @@ import { onboardingHref, OnboardingPage, type OnboardingView } from './page.tsx'
 
 /** Category tiles offered in step 1 (15a shows six). */
 const TILE_COUNT = 6
+/** Ingredient photos shown around the pot in the 15b panel. */
+const PANEL_INGREDIENTS = 6
 /** Common ingredients people avoid, offered as chips in step 3 when they exist. */
 const AVOID_SUGGESTIONS = ['Kacang Tanah', 'Udang', 'Cumi', 'Telur', 'Terasi', 'Santan', 'Tepung Terigu', 'Cabai Rawit']
 
@@ -140,20 +142,25 @@ async function renderStep(context: AppContext, userId: string, step: OnboardingS
     let [tiles, candidates] = await Promise.all([listCategoryTiles(db, TILE_COUNT), listFeedCandidates(db)])
     let selected = draft.categoryIds ?? preferences.favoriteCategoryIds.filter((id) => tiles.some((tile) => tile.id === id))
     let feed = buildFeed(candidates, { ...preferences, favoriteCategoryIds: selected })
-    view = { step, tiles, selected, preview: feed.shown.slice(0, 3) }
+    view = { step, tiles, selected, shownCount: feed.shown.length }
   } else if (step === 'dapur') {
     let ids = draft.ingredientIds ?? (await listPantryItems(db, userId)).map((item) => item.id)
-    let [selected, popular, matches] = await Promise.all([
+    let [selected, usedWith, matches] = await Promise.all([
       getIngredientsByIds(db, ids),
-      listPopularIngredients(db, 16),
+      listIngredientsUsedWith(db, ids, 4),
       findPantryMatches(db, { ingredientIds: ids, assumeStaples: true, maxMinutes: null, difficulty: null }),
     ])
+    // Without a pantry there is nothing to pair with yet, so suggest the most-used ingredients.
+    let suggestions = usedWith.length > 0 ? usedWith : await listPopularIngredients(db, 4)
     view = {
       step,
       selected,
-      quickAdd: popular.filter((ingredient) => !ids.includes(ingredient.id)).slice(0, 4),
+      suggestions: suggestions.filter((ingredient) => !ids.includes(ingredient.id)),
       matchCount: matches.length,
-      matches: matches.slice(0, 2),
+      readyCount: matches.filter((match) => match.missing.length === 0).length,
+      top: matches[0] ?? null,
+      // Few ingredients have photos yet; show those first.
+      panelIngredients: [...selected].sort((a, b) => Number(!a.imageUrl) - Number(!b.imageUrl)).slice(0, PANEL_INGREDIENTS),
     }
   } else if (step === 'pantangan') {
     let ids = draft.avoidedIds ?? preferences.avoidedIngredientIds
@@ -163,28 +170,29 @@ async function renderStep(context: AppContext, userId: string, step: OnboardingS
       listFeedCandidates(db),
     ])
     let suggestions = AVOID_SUGGESTIONS.flatMap((name) => known.get(name.toLowerCase()) ?? [])
-    let options: PantryIngredient[] = [...suggestions, ...chosen.filter((i) => !suggestions.some((s) => s.id === i.id))]
     let feed = buildFeed(candidates, { ...preferences, avoidedIngredientIds: ids })
     view = {
       step,
-      options,
+      // A stable order: moving checked chips between submits would desync the checkboxes.
+      options: [...suggestions, ...chosen.filter((ingredient) => !suggestions.some((s) => s.id === ingredient.id))],
       chosen: ids,
-      favorites: saved.favoriteCategories,
       avoided: chosen,
-      shownCount: feed.shown.length,
-      shown: feed.shown.slice(0, 2),
-      hidden: feed.hidden[0] ?? null,
+      hidden: feed.hidden.map((item) => item.recipe),
+      safe: feed.shown[0] ?? null,
     }
   } else {
-    let [pantry, candidates] = await Promise.all([listPantryItems(db, userId), listFeedCandidates(db)])
+    let [pantry, avoided, candidates] = await Promise.all([
+      listPantryItems(db, userId),
+      getIngredientsByIds(db, preferences.avoidedIngredientIds),
+      listFeedCandidates(db),
+    ])
     let feed = buildFeed(candidates, preferences)
     view = {
       step,
-      favorites: saved.favoriteCategories,
+      hasFavorites: saved.favoriteCategories.length > 0,
       pantryCount: pantry.length,
-      avoided: saved.avoided,
-      shownCount: feed.shown.length,
-      shown: feed.shown.slice(0, 4),
+      avoided,
+      shown: feed.shown.slice(0, 3),
     }
   }
 

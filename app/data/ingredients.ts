@@ -83,13 +83,13 @@ export async function listPopularIngredients(db: Database, limit = 10): Promise<
   return rows.map((row) => ({ id: row.id, name: row.name, imageUrl: row.image_url }))
 }
 
-export async function getIngredientsByIds(db: Database, ids: string[]): Promise<PantryIngredient[]> {
+export async function getIngredientsByIds(db: Database, ids: string[]): Promise<IngredientSummary[]> {
   let valid = ids.filter(isUuid)
   if (valid.length === 0) return []
-  return queryRows<PantryIngredient>(
+  return queryRows<IngredientSummary>(
     db,
     // Keep the caller's (URL insertion) order.
-    sql`select id, name from ingredients where id = any(${valid}::uuid[])
+    sql`select id, name, image_url as "imageUrl" from ingredients where id = any(${valid}::uuid[])
         order by array_position(${valid}::uuid[], id)`,
   )
 }
@@ -97,12 +97,12 @@ export async function getIngredientsByIds(db: Database, ids: string[]): Promise<
 export async function findIngredientsByNames(
   db: Database,
   names: string[],
-): Promise<Map<string, PantryIngredient>> {
+): Promise<Map<string, IngredientSummary>> {
   let lowered = [...new Set(names.map((name) => name.trim().toLowerCase()))]
   if (lowered.length === 0) return new Map()
-  let rows = await queryRows<PantryIngredient>(
+  let rows = await queryRows<IngredientSummary>(
     db,
-    sql`select id, name from ingredients where lower(name) = any(${lowered}::text[])`,
+    sql`select id, name, image_url as "imageUrl" from ingredients where lower(name) = any(${lowered}::text[])`,
   )
   return new Map(rows.map((row) => [row.name.toLowerCase(), row]))
 }
@@ -169,6 +169,29 @@ export async function listCoOccurringIngredients(
         join recipe_ingredients other on other.recipe_id = base.recipe_id and other.ingredient_id <> ${ingredientId}
         join ingredients i on i.id = other.ingredient_id
         group by i.id order by count(*) desc, i.name limit ${limit}`,
+  )
+}
+
+/**
+ * "Sering dipakai bareng" (onboarding 15b): ingredients that appear most often in published
+ * recipes using any of the given ingredients, excluding those. Derived from recipe_ingredients only.
+ */
+export async function listIngredientsUsedWith(
+  db: Database,
+  ingredientIds: string[],
+  limit = 4,
+): Promise<IngredientSummary[]> {
+  let valid = ingredientIds.filter(isUuid)
+  if (valid.length === 0) return []
+  return queryRows<IngredientSummary>(
+    db,
+    sql`select i.id, i.name, i.image_url as "imageUrl"
+        from recipe_ingredients ri
+        join recipes r on r.id = ri.recipe_id and r.status = 'published'
+        join ingredients i on i.id = ri.ingredient_id
+        where ri.recipe_id in (select recipe_id from recipe_ingredients where ingredient_id = any(${valid}::uuid[]))
+          and not (ri.ingredient_id = any(${valid}::uuid[]))
+        group by i.id order by count(distinct ri.recipe_id) desc, i.name limit ${limit}`,
   )
 }
 

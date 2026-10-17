@@ -7,7 +7,7 @@ const UDANG = { id: 'udang', name: 'Udang' }
 const TELUR = { id: 'telur', name: 'Telur' }
 
 describe('onboarding', () => {
-  it('walks the four steps with a safe default', () => {
+  it('walks the three steps and the finish screen with a safe default', () => {
     assert.equal(parseStep('pantangan'), 'pantangan')
     assert.equal(parseStep('lain'), 'selera')
     assert.equal(nextStep('selera'), 'dapur')

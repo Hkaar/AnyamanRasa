@@ -10,13 +10,13 @@ describe('onboarding', () => {
     assert.match(response.headers.get('Location') ?? '', /^\/masuk/)
   })
 
-  it('walks through the four steps and personalises the home page', async () => {
+  it('walks through the three steps and the finish screen, and personalises the home page', async () => {
     let client = createClient()
     await client.login(SARI)
 
     let taste = await (await client.get('/mulai')).text()
     assert.match(taste, /Masakan apa yang bikin kamu lapar\?/)
-    assert.match(taste, /Langkah 1 dari 4/)
+    assert.match(taste, /Langkah 1 dari 3/)
     let categories = [...taste.matchAll(/name="kategori" value="(\d+)"/g)].map((m) => m[1]!)
     assert.ok(categories.length >= 3)
 
@@ -34,6 +34,8 @@ describe('onboarding', () => {
     // Typed names resolve to ingredients; chips stay a draft until "Lanjut".
     let pantry = await (await client.post('/mulai', { langkah: 'dapur', tambah: 'telur' })).text()
     assert.match(pantry, /aria-label="Hapus Telur"/)
+    assert.match(pantry, /Di dapurmu · 1 bahan/)
+    assert.match(pantry, /Sering dipakai bareng/)
     let missing = await (await client.post('/mulai', { langkah: 'dapur', tambah: 'bahan khayalan' })).text()
     assert.match(missing, /belum ada di AnyamanRasa/)
     let pantrySaved = await client.post('/mulai', { langkah: 'dapur', bahan: [TELUR], lanjut: '1' })
@@ -47,9 +49,9 @@ describe('onboarding', () => {
     assert.equal(avoidSaved.headers.get('Location'), '/mulai?langkah=selesai')
 
     let done = await (await client.get('/mulai?langkah=selesai')).text()
-    assert.match(done, /Dapurmu siap!/)
-    assert.match(done, /Tanpa udang/)
-    assert.match(done, /bahan tersimpan di dapurmu/)
+    assert.match(done, /Berandamu siap disajikan\./)
+    assert.match(done, /tanpa udang/)
+    assert.match(done, /1 bahan di dapurmu/)
 
     let home = await (await client.get('/?tab=untukmu')).text()
     let inspiration = home.slice(home.indexOf('id="inspirasi"'), home.indexOf('</section>', home.indexOf('id="inspirasi"')))
